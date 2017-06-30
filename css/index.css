@@ -1,0 +1,32 @@
+* {
+    margin: 0px;
+    padding: 0px;
+  }
+
+ body{
+        font-family: Helvetica,Arial,sans-serif;
+        background-color: #ABC;
+        padding: 50px;
+     } 
+
+ h1 {
+      
+      text-align: center;
+      border-bottom: 2px solid #009;
+      margin-bottom: 10px;
+   }
+
+
+ div#content {
+                outline: 1px solid red;                
+                position: absolute;
+                top: 160px;
+                width: 90%;
+                z-index: 1;
+                font-size: 9px;
+             } 
+
+ div#data {
+                outline: 1px solid red;
+                font-size: 9px;               
+          }                
