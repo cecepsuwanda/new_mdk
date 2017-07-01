@@ -117,7 +117,7 @@ class dt_report
              $op=$tmp;
             }
          }else{
-           $op=$jml[$idx_jml];
+           $op=isset($jml[$idx_jml]) ? $jml[$idx_jml] : 0;
          }
       }else{
         if(!empty($jml)){
@@ -133,34 +133,41 @@ class dt_report
 	{
   		$op1=$this->check_var($jml,$idx_jml);
       $op2=$this->check_var($dt,$idx_dt);
-
-
-      /*if($idx_jml=='' and $idx_dt==''){
-        $tmp_jml = $jml + $dt;
-      }
-      elseif($idx_dt==''){
-        $tmp_jml = (isset($jml[$idx_jml]) ? $jml[$idx_jml] + $dt : $dt);
-      }else{
-        $tmp_jml = (isset($jml[$idx_jml]) ? ($jml[$idx_jml] + (isset($dt[$idx_dt]) ? $dt[$idx_dt] : 0)) : (isset($dt[$idx_dt]) ? $dt[$idx_dt] : 0));      
-      }*/
-
       $tmp_jml = $op1+$op2;
-
     return $tmp_jml;		
 	}
 
   private function fprosen($dt1,$idx_dt1,$dt2,$idx_dt2,$kali=100)
   {
-    if($idx_dt1=='' and $idx_dt2==''){
+    
+    $op1=$this->check_var($dt1,$idx_dt1);
+    $op2=$this->check_var($dt2,$idx_dt2);
+    $tmp_prosen = ($op2 !=0 ? round((($op1/$op2)*$kali),2) : 0 );
+
+    /*if($idx_dt1=='' and $idx_dt2==''){
       $tmp_prosen = ($dt2 !=0 ? round((($dt1/$dt2)*$kali),2) : 0 );
     }elseif($idx_dt2==''){
       $tmp_prosen = ($dt2 !=0 ? round((($dt1[$idx_dt1]/$dt2)*$kali),2) : 0 );
     }
     else{
       $tmp_prosen = ($dt2[$idx_dt2] !=0 ? round((($dt1[$idx_dt1]/$dt2[$idx_dt2])*$kali),2) : 0 );       
-    }            
+    }*/
+
     return $tmp_prosen;
-  } 
+  }
+
+  private function frupiah($dt,$idx,$digit=0)
+  {
+       if($idx=='')
+       {
+         $txt = number_format($dt,$digit,',','.');
+       }else{
+        $txt = number_format((isset($dt[$idx]) ? $dt[$idx] : 0),$digit,',','.');
+       }
+
+       return $txt;
+  }
+ 
 
   private function arrayks()
   {
@@ -766,26 +773,26 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
       if($idkec==0){
          $jml=$dt->getjml($row['id_unit_detail'],12);
          $tmp_dt_tb[]=number_format($jml,0,',','.');
-         $arrjml['row1']['jml1'] = $this->fjml_ttl($arrjml['row1']['jml1'],'',$jml,'');
+         $arrjml['row1']['jml1'] = $this->fjml_ttl($arrjml,array('row1','jml1'),$jml,'');
          $tmp_dt_tb[]=number_format($jml,0,',','.');
-         $arrjml['row1']['jml2'] = $this->fjml_ttl($arrjml['row1']['jml2'],'',$jml,'');
+         $arrjml['row1']['jml2'] = $this->fjml_ttl($arrjml,array('row1','jml2'),'',$jml,'');
       }
       
       if($iddesa==0){         
          $jml=$dt->getjml($row['id_unit_detail'],13);
          $tmp_dt_tb[]=number_format($jml,0,',','.');
-         $arrjml['row1']['jml3'] = $this->fjml_ttl($arrjml['row1']['jml3'],'',$jml,'');
+         $arrjml['row1']['jml3'] = $this->fjml_ttl($arrjml,array('row1','jml3'),$jml,'');
          $tmp_dt_tb[]=number_format($jml,0,',','.');
-         $arrjml['row1']['jml4'] = $this->fjml_ttl($arrjml['row1']['jml4'],'',$jml,'');
+         $arrjml['row1']['jml4'] = $this->fjml_ttl($arrjml,array('row1','jml4'),$jml,'');
       }
 
       if($iddusun==0)
       {
          $jml=$dt->getjml($row['id_unit_detail'],14);
          $tmp_dt_tb[]=number_format($jml,0,',','.');
-         $arrjml['row1']['jml5'] = $this->fjml_ttl($arrjml['row1']['jml5'],'',$jml,'');
+         $arrjml['row1']['jml5'] = $this->fjml_ttl($arrjml,array('row1','jml5'),$jml,'');
          $tmp_dt_tb[]=number_format($jml,0,',','.');
-         $arrjml['row1']['jml6'] = $this->fjml_ttl($arrjml['row1']['jml6'],'',$jml,'');
+         $arrjml['row1']['jml6'] = $this->fjml_ttl($arrjml,array('row1','jml6'),$jml,'');
       }
 
       $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
@@ -796,45 +803,45 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
       $data1 = $tb->getData("$kd_wlq Kd_mutasi IS NULL");
       $rc = $this->build_rc($data1);
 
-      $tmp_dt_tb[]=number_format($rc['j_rt'],0,',','.');
-      $arrjml['row1']['jml7'] = $this->fjml_ttl($arrjml['row1']['jml7'],'',$rc['j_rt'],'');
-      $tmp_dt_tb[]=number_format($rc['j_rt'],0,',','.');
-      $arrjml['row1']['jml8'] = $this->fjml_ttl($arrjml['row1']['jml8'],'',$rc['j_rt'],'');
-      $tmp_dt_tb[]=number_format($rc['j_rt'],0,',','.');
-      $arrjml['row1']['jml9'] = $this->fjml_ttl($arrjml['row1']['jml9'],'',$rc['j_rt'],'');
-      $tmp_dt_tb[]=number_format($rc['j_rt'],0,',','.');
-      $arrjml['row1']['jml10'] = $this->fjml_ttl($arrjml['row1']['jml10'],'',$rc['j_rt'],'');
-      $arrjml['row2']['jml10'] = $this->fjml_ttl($arrjml['row2']['jml10'],'',$rc['pra_s_j_rt'],'');
-      $arrjml['row3']['jml10'] = $this->fjml_ttl($arrjml['row3']['jml10'],'',$rc['ks_j_rt'],'');
+      $tmp_dt_tb[]=$this->frupiah($rc,'j_rt');
+      $arrjml['row1']['jml7'] = $this->fjml_ttl($arrjml,array('row1','jml7'),$rc,'j_rt');
+      $tmp_dt_tb[]=$this->frupiah($rc,'j_rt');
+      $arrjml['row1']['jml8'] = $this->fjml_ttl($arrjml,array('row1','jml8'),$rc,'j_rt');
+      $tmp_dt_tb[]=$this->frupiah($rc,'j_rt');
+      $arrjml['row1']['jml9'] = $this->fjml_ttl($arrjml,array('row1','jml9'),$rc,'j_rt');
+      $tmp_dt_tb[]=$this->frupiah($rc,'j_rt');
+      $arrjml['row1']['jml10'] = $this->fjml_ttl($arrjml,array('row1','jml10'),$rc,'j_rt');
+      $arrjml['row2']['jml10'] = $this->fjml_ttl($arrjml,array('row2','jml10'),$rc,'pra_s_j_rt');
+      $arrjml['row3']['jml10'] = $this->fjml_ttl($arrjml,array('row3','jml10'),$rc,'ks_j_rt');
 
       $j=1;
       if(!empty($rc)){  
         foreach ($rc as $key => $value) {
           if($j>1 and $j<=15){
             $tmp_dt_tb[]=number_format($value,0,',','.'); 
-            $arrjml['row1'][$key] = $this->fjml_ttl($arrjml['row1'][$key],'',$value,'');
+            $arrjml['row1'][$key] = $this->fjml_ttl($arrjml,array('row1',$key),$value,'');
           }
 
           if($j>16 and $j<=30){            
-            $arrjml['row2'][$key] = $this->fjml_ttl($arrjml['row2'][$key],'',$value,'');
+            $arrjml['row2'][$key] = $this->fjml_ttl($arrjml,array('row2',$key),$value,'');
           }
 
           if($j>31 and $j<=45){             
-            $arrjml['row3'][$key] = $this->fjml_ttl($arrjml['row3'][$key],'',$value,'');
+            $arrjml['row3'][$key] = $this->fjml_ttl($arrjml,array('row3',$key),$value,'');
           }
 
           $j++;
         }
         $tmp_dt_tb[]=number_format($rc['j_lk_jiwa']+$rc['j_pr_jiwa'],0,',','.');
-        $arrjml['row1']['jml11'] = $this->fjml_ttl($arrjml['row1']['jml11'],'',$rc['j_lk_jiwa']+$rc['j_pr_jiwa'],'');
+        $arrjml['row1']['jml11'] = $this->fjml_ttl($arrjml,array('row1','jml11'),$rc['j_lk_jiwa']+$rc['j_pr_jiwa'],'');
         $tmp_dt_tb[]=number_format($rc['j_wus'],0,',','.');
-        $arrjml['row1']['jml12'] = $this->fjml_ttl($arrjml['row1']['jml12'],'',$rc['j_wus'],'');
+        $arrjml['row1']['jml12'] = $this->fjml_ttl($arrjml,array('row1','jml12'),$rc,'j_wus');
 
-        $arrjml['row2']['jml11'] = $this->fjml_ttl($arrjml['row2']['jml11'],'',$rc['pra_s_j_lk_jiwa']+$rc['pra_s_j_pr_jiwa'],'');
-        $arrjml['row2']['jml12'] = $this->fjml_ttl($arrjml['row2']['jml12'],'',$rc['pra_s_j_wus'],''); 
+        $arrjml['row2']['jml11'] = $this->fjml_ttl($arrjml,array('row2','jml11'),$rc['pra_s_j_lk_jiwa']+$rc['pra_s_j_pr_jiwa'],'');
+        $arrjml['row2']['jml12'] = $this->fjml_ttl($arrjml,array('row2','jml12'),$rc,'pra_s_j_wus'); 
 
-        $arrjml['row3']['jml11'] = $this->fjml_ttl($arrjml['row3']['jml11'],'',$rc['ks_j_lk_jiwa']+$rc['ks_j_pr_jiwa'],'');
-        $arrjml['row3']['jml12'] = $this->fjml_ttl($arrjml['row3']['jml12'],'',$rc['ks_j_wus'],''); 
+        $arrjml['row3']['jml11'] = $this->fjml_ttl($arrjml,array('row3','jml11'),$rc['ks_j_lk_jiwa']+$rc['ks_j_pr_jiwa'],'');
+        $arrjml['row3']['jml12'] = $this->fjml_ttl($arrjml,array('row3','jml12'),$rc,'ks_j_wus'); 
 
       }else{
           for($j=1;$j<17;$j++)
@@ -996,29 +1003,29 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
         foreach ($rc as $key => $value) {
           if($j<=23){
             $tmp_dt_tb[]=number_format($value,0,',','.'); 
-            $arrjml['row1'][$key] = $this->fjml_ttl($arrjml['row1'][$key],'',$value,'');
+            $arrjml['row1'][$key] = $this->fjml_ttl($arrjml,array('row1',$key),$value,'');
           }
 
           if($j>23 and $j<=46){            
-            $arrjml['row2'][$key] = $this->fjml_ttl($arrjml['row2'][$key],'',$value,'');
+            $arrjml['row2'][$key] = $this->fjml_ttl($arrjml,array('row2',$key),$value,'');
           }
 
           if($j>46 and $j<=69){             
-            $arrjml['row3'][$key] = $this->fjml_ttl($arrjml['row3'][$key],'',$value,'');
+            $arrjml['row3'][$key] = $this->fjml_ttl($arrjml,array('row3',$key),$value,'');
             $jml=0;
           }
 
           if($j>69){
             $tmp_dt_tb[]=number_format($value,0,',','.');
             $jml=$jml+$value; 
-            $arrjml['row1'][$key] = $this->fjml_ttl($arrjml['row1'][$key],'',$value,'');
+            $arrjml['row1'][$key] = $this->fjml_ttl($arrjml,array('row1',$key),$value,'');
           }
 
           $j++;
         }
 
         $tmp_dt_tb[]=number_format($jml,0,',','.');
-        $arrjml['row1']['jml'] = $this->fjml_ttl($arrjml['row1']['jml'],'',$jml,'');
+        $arrjml['row1']['jml'] = $this->fjml_ttl($arrjml,array('row1','jml'),$jml,'');
         
       }else{
           for($j=1;$j<30;$j++)
@@ -1114,34 +1121,34 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
               $jml=$jml+$value;
             }
 
-            $arrjml['row1'][$key] = $this->fjml_ttl($arrjml['row1'][$key],'',$value,'');
+            $arrjml['row1'][$key] = $this->fjml_ttl($arrjml,array('row1',$key),$value,'');
           }
 
           if($j>9 and $j<=18){
             if($j>10){ 
               $jml1=$jml1+$value;
             }            
-            $arrjml['row2'][$key] = $this->fjml_ttl($arrjml['row2'][$key],'',$value,'');
+            $arrjml['row2'][$key] = $this->fjml_ttl($arrjml,array('row2',$key),$value,'');
           }
 
           if($j>18 and $j<=32){ 
           if($j>19){ 
               $jml2=$jml2+$value;
             }               
-            $arrjml['row3'][$key] = $this->fjml_ttl($arrjml['row3'][$key],'',$value,'');            
+            $arrjml['row3'][$key] = $this->fjml_ttl($arrjml,array('row3',$key),$value,'');            
           }
           
           $j++;
         }
 
         $tmp_dt_tb[]=number_format($jml,0,',','.');
-        $tmp_dt_tb[]=number_format($this->fprosen($jml,'',$rc['jd'],''),2,',','.').'%';
-        $arrjml['row1']['jml'] = $this->fjml_ttl($arrjml['row1']['jml'],'',$jml,''); 
-        $arrjml['row1']['prosen'] =  $this->fprosen($arrjml['row1']['jml'],'',$arrjml['row1']['jd'],'') ;
-        $arrjml['row2']['jml1'] = $this->fjml_ttl($arrjml['row2']['jml1'],'',$jml1,'');
-        $arrjml['row2']['prosen'] =  $this->fprosen($arrjml['row2']['jml1'],'',$arrjml['row2']['pra_s_j_pus'],'') ;
-        $arrjml['row3']['jml2'] = $this->fjml_ttl($arrjml['row3']['jml2'],'',$jml2,'');
-        $arrjml['row3']['prosen'] =  $this->fprosen($arrjml['row3']['jml2'],'',$arrjml['row3']['ks_j_pus'],'') ;
+        $tmp_dt_tb[]=number_format($this->fprosen($jml,'',$rc,'jd'),2,',','.').'%';
+        $arrjml['row1']['jml'] = $this->fjml_ttl($arrjml,array('row1','jml'),$jml,''); 
+        $arrjml['row1']['prosen'] =  $this->fprosen($arrjml,array('row1','jml'),$arrjml,array('row1','jd')) ;
+        $arrjml['row2']['jml1'] = $this->fjml_ttl($arrjml,array('row2','jml1'),$jml1,'');
+        $arrjml['row2']['prosen'] =  $this->fprosen($arrjml,array('row2','jml1'),$arrjml,array('row2','pra_s_j_pus')) ;
+        $arrjml['row3']['jml2'] = $this->fjml_ttl($arrjml,array('row3','jml2'),$jml2,'');
+        $arrjml['row3']['prosen'] =  $this->fprosen($arrjml,array('row3','jml2'),$arrjml,array('row3','ks_j_pus')) ;
       }else{
           for($j=1;$j<11;$j++)
           {
@@ -1230,14 +1237,14 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
               $jml=$jml+$value;
             }
 
-            $arrjml[$key] = $this->fjml_ttl($arrjml[$key],'',$value,'');
+            $arrjml[$key] = $this->fjml_ttl($arrjml,$key,$value,'');
          $j++;
         }
 
         $tmp_dt_tb[]=number_format($jml,0,',','.');
-        $tmp_dt_tb[]=number_format($this->fprosen($jml,'',$rc['jd'],''),2,',','.').'%';
-        $arrjml['jml'] = $this->fjml_ttl($arrjml['jml'],'',$jml,''); 
-        $arrjml['prosen'] =  $this->fprosen($arrjml['jml'],'',$arrjml['jd'],'') ;
+        $tmp_dt_tb[]=number_format($this->fprosen($jml,'',$rc,'jd'),2,',','.').'%';
+        $arrjml['jml'] = $this->fjml_ttl($arrjml,'jml',$jml,''); 
+        $arrjml['prosen'] =  $this->fprosen($arrjml,'jml',$arrjml,'jd') ;
         
       }else{
           for($j=1;$j<11;$j++)
@@ -1328,14 +1335,14 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
               $jml=$jml+$value;
             }
 
-            $arrjml[$key] = $this->fjml_ttl($arrjml[$key],'',$value,'');
+            $arrjml[$key] = $this->fjml_ttl($arrjml,$key,$value,'');
          $j++;
         }
 
         $tmp_dt_tb[]=number_format($jml,0,',','.');
-        $tmp_dt_tb[]=number_format($this->fprosen($jml,'',$rc['jd'],''),2,',','.').'%';
-        $arrjml['jml'] = $this->fjml_ttl($arrjml['jml'],'',$jml,''); 
-        $arrjml['prosen'] =  $this->fprosen($arrjml['jml'],'',$arrjml['jd'],'') ;
+        $tmp_dt_tb[]=number_format($this->fprosen($jml,'',$rc,'jd'),2,',','.').'%';
+        $arrjml['jml'] = $this->fjml_ttl($arrjml,'jml',$jml,''); 
+        $arrjml['prosen'] =  $this->fprosen($arrjml,'jml',$arrjml,'jd') ;
         
       }else{
           for($j=1;$j<11;$j++)
@@ -1417,8 +1424,8 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
       $data1 = $tb->getData("$kd_wlq Kd_mutasi IS NULL and (".$this->arr_ks['pra_s'].")");
       $rc = $this->build_rc($data1);
       
-      $tmp_dt_tb[]=number_format($rc['j_rt'],0,',','.');
-      $arrjml['jml10'] = $this->fjml_ttl($arrjml['jml10'],'',$rc['j_rt'],'');
+      $tmp_dt_tb[]=$this->frupiah($rc,'j_rt');
+      $arrjml['jml10'] = $this->fjml_ttl($arrjml,'jml10',$rc,'j_rt');
       
 
       $j=1;
@@ -1426,15 +1433,15 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
         foreach ($rc as $key => $value) {
           if($j>1 and $j<=15){
             $tmp_dt_tb[]=number_format($value,0,',','.'); 
-            $arrjml[$key] = $this->fjml_ttl($arrjml[$key],'',$value,'');
+            $arrjml[$key] = $this->fjml_ttl($arrjml,$key,$value,'');
           }      
 
           $j++;
         }
-        $tmp_dt_tb[]=number_format($rc['j_lk_jiwa']+$rc['j_pr_jiwa'],0,',','.');
-        $arrjml['jml11'] = $this->fjml_ttl($arrjml['jml11'],'',$rc['j_lk_jiwa']+$rc['j_pr_jiwa'],'');
-        $tmp_dt_tb[]=number_format($rc['j_wus'],0,',','.');
-        $arrjml['jml12'] = $this->fjml_ttl($arrjml['jml12'],'',$rc['j_wus'],'');
+        $tmp_dt_tb[]=$this->frupiah($rc['j_lk_jiwa']+$rc['j_pr_jiwa'],'');
+        $arrjml['jml11'] = $this->fjml_ttl($arrjml,'jml11',$rc['j_lk_jiwa']+$rc['j_pr_jiwa'],'');
+        $tmp_dt_tb[]=$this->frupiah($rc,'j_wus');
+        $arrjml['jml12'] = $this->fjml_ttl($arrjml,'jml12',$rc,'j_wus');
       }else{
           for($j=1;$j<17;$j++)
           {
@@ -1541,7 +1548,7 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
       if(!empty($rc)){  
         foreach ($rc as $key => $value) {          
             $tmp_dt_tb[]=number_format($value,0,',','.'); 
-            $arrjml[$key] = $this->fjml_ttl($arrjml[$key],'',$value,'');            
+            $arrjml[$key] = $this->fjml_ttl($arrjml,$key,$value,'');            
         }       
       }else{
           for($j=1;$j<30;$j++)
@@ -1623,8 +1630,8 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
       $data1 = $tb->getData("$kd_wlq Kd_mutasi IS NULL and (".$this->arr_ks['ks_1'].")");
       $rc = $this->build_rc($data1);
       
-      $tmp_dt_tb[]=number_format($rc['j_rt'],0,',','.');
-      $arrjml['jml10'] = $this->fjml_ttl($arrjml['jml10'],'',$rc['j_rt'],'');
+      $tmp_dt_tb[]=$this->frupiah($rc,'j_rt');
+      $arrjml['jml10'] = $this->fjml_ttl($arrjml,'jml10',$rc,'j_rt');
       
 
       $j=1;
@@ -1632,15 +1639,15 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
         foreach ($rc as $key => $value) {
           if($j>1 and $j<=15){
             $tmp_dt_tb[]=number_format($value,0,',','.'); 
-            $arrjml[$key] = $this->fjml_ttl($arrjml[$key],'',$value,'');
+            $arrjml[$key] = $this->fjml_ttl($arrjml,$key,$value,'');
           }      
 
           $j++;
         }
-        $tmp_dt_tb[]=number_format($rc['j_lk_jiwa']+$rc['j_pr_jiwa'],0,',','.');
-        $arrjml['jml11'] = $this->fjml_ttl($arrjml['jml11'],'',$rc['j_lk_jiwa']+$rc['j_pr_jiwa'],'');
-        $tmp_dt_tb[]=number_format($rc['j_wus'],0,',','.');
-        $arrjml['jml12'] = $this->fjml_ttl($arrjml['jml12'],'',$rc['j_wus'],'');
+        $tmp_dt_tb[]=$this->frupiah($rc['j_lk_jiwa']+$rc['j_pr_jiwa'],'');
+        $arrjml['jml11'] = $this->fjml_ttl($arrjml,'jml11',$rc['j_lk_jiwa']+$rc['j_pr_jiwa'],'');
+        $tmp_dt_tb[]=$this->frupiah($rc,'j_wus');
+        $arrjml['jml12'] = $this->fjml_ttl($arrjml,'jml12',$rc,'j_wus');
       }else{
           for($j=1;$j<17;$j++)
           {
@@ -1747,7 +1754,7 @@ function getdtmenu02_tab2($idkec,$iddesa,$iddusun,$idrt){
       if(!empty($rc)){  
         foreach ($rc as $key => $value) {          
             $tmp_dt_tb[]=number_format($value,0,',','.'); 
-            $arrjml[$key] = $this->fjml_ttl($arrjml[$key],'',$value,'');            
+            $arrjml[$key] = $this->fjml_ttl($arrjml,$key,$value,'');            
         }       
       }else{
           for($j=1;$j<30;$j++)

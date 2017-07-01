@@ -1923,7 +1923,7 @@ class vw_report
                                                  $html_tab11
                                                  )
                                            );
-    $html_txt .= $tab->display("onClick='tab_click(this,$idkec,$iddesa,$iddusun,$idrt);'");
+    $html_txt = $tab->display("onClick='tab_click(this,$idkec,$iddesa,$iddusun,$idrt);'");
     return $html_txt; 
   }
 }   
