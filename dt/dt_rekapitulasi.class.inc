@@ -94,28 +94,53 @@ class dt_rekapitulasi
 		return $rc;		  
 	}
 
+	private function check_var($jml,$idx_jml)
+  {
+    $op=0;
+      if(is_array($jml))
+      {         
+         if(is_array($idx_jml))
+         {
+            $tmp=$jml;
+            $idx_ada = true;
+            foreach ($idx_jml as $idx) {
+              if($idx_ada){
+                if(isset($tmp[$idx])){   
+                  $tmp=$tmp[$idx];
+                 }else{
+                   $idx_ada=false;
+                 }
+              }    
+            }
+            if($idx_ada){
+             $op=$tmp;
+            }
+         }else{
+           $op=isset($jml[$idx_jml]) ? $jml[$idx_jml] : 0;
+         }
+      }else{
+        if(!empty($jml)){
+         $op=$jml;
+        }
+      }
+
+      return $op;
+  }
+
 	private function fjml_ttl($jml,$idx_jml,$dt,$idx_dt)
 	{
-		if($idx_jml=='' and $idx_dt==''){
-			$tmp_jml = $jml + $dt;
-		}elseif($idx_dt==''){
-			$tmp_jml = (isset($jml[$idx_jml]) ? $jml[$idx_jml] + $dt : $dt);
-		}else{
-			$tmp_jml = (isset($jml[$idx_jml]) ? ($jml[$idx_jml] + $dt[$idx_dt]) : $dt[$idx_dt]);   	  
-		}   	       
-		return $tmp_jml;
+		$op1=$this->check_var($jml,$idx_jml);
+        $op2=$this->check_var($dt,$idx_dt);
+        $tmp_jml = $op1+$op2;
+        return $tmp_jml;
 	}
 
 	private function fprosen($dt1,$idx_dt1,$dt2,$idx_dt2,$kali=100)
 	{
-		if($idx_dt1=='' and $idx_dt2==''){
-			$tmp_prosen = ($dt2 !=0 ? round((($dt1/$dt2)*$kali),2) : 0 );
-		}elseif($idx_dt2==''){
-			$tmp_prosen = ($dt2 !=0 ? round((($dt1[$idx_dt1]/$dt2)*$kali),2) : 0 );
-		}
-		else{
-			$tmp_prosen = ($dt2[$idx_dt2] !=0 ? round((($dt1[$idx_dt1]/$dt2[$idx_dt2])*$kali),2) : 0 );   	  
-		}   	       
+		
+        $op1=$this->check_var($dt1,$idx_dt1);
+        $op2=$this->check_var($dt2,$idx_dt2);
+		$tmp_prosen = ($op2 !=0 ? round((($op1/$op2)*$kali),2) : 0 );   	  
 		return $tmp_prosen;
 	} 
 
@@ -138,6 +163,18 @@ class dt_rekapitulasi
 		$this->arr_ks_bb['ks_2']="ks_2";
 		$this->arr_ks_bb['ks_3']="ks_3";
 		$this->arr_ks_bb['ks_3_p']="ks_3_p";
+	}
+
+	private function frupiah($dt,$idx,$digit=0)
+	{
+       if($idx=='')
+       {
+         $txt = number_format($dt,$digit,',','.');
+       }else{
+       	$txt = number_format((isset($dt[$idx]) ? $dt[$idx] : 0),$digit,',','.');
+       }
+
+       return $txt;
 	}
 
 	function getdtmenu401($idkec,$iddesa,$iddusun,$idrt){ 
@@ -182,65 +219,65 @@ class dt_rekapitulasi
 		$jml_pra=1;
 		$jml_ks=1;
 
-
-		foreach($data as $row)
-		{
-			$tmp_dt_tb=array();			
-
-			if(empty($idrt))
+        if(!empty($data)){
+			foreach($data as $row)
 			{
-			  $tmp_dt_tb[]=$i;
-			  $tmp_dt_tb[]=$row['no_unit_detail'];    
-			
+				$tmp_dt_tb=array();			
 
-			  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
-			  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
-			  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
-			  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
-			
-			  $data1 = $tb->getData("$kd_wlq (".$this->arr_ks['pra_s']." OR ".$this->arr_ks['ks_1'].") AND Kd_mutasi IS NULL");			
-			  $rc = $this->build_rc($data1);
-            
-              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
+				if(empty($idrt))
+				{
+				  $tmp_dt_tb[]=$i;
+				  $tmp_dt_tb[]=$row['no_unit_detail'];    
+				
 
-              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
-              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
-            
-              $tmp_dt_tb[]=number_format($rc['j_pra_s'],0,',','.');
-              $arrjml['j_pra_s']=$this->fjml_ttl($arrjml,'j_pra_s',$rc,'j_pra_s');            
-            
-              $tmp_dt_tb[]=number_format($rc['j_ks'],0,',','.');
-              $arrjml['j_ks']=$this->fjml_ttl($arrjml,'j_ks',$rc,'j_ks'); 
-            } else{
-            	$tmp_dt_tb[]=$row['Kd_fam'];
-               
-                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
-			    $rc = $this->build_rc($data1);     
+				  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
+				  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
+				  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
+				  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
+				
+				  $data1 = $tb->getData("$kd_wlq (".$this->arr_ks['pra_s']." OR ".$this->arr_ks['ks_1'].") AND Kd_mutasi IS NULL");			
+				  $rc = $this->build_rc($data1);
+	            
+	              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
+	              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
 
-			    $tmp_dt_tb[]=$rc['Nama'];
-			    $tmp_dt_tb[]=$row['jml_jiwa'];
-			    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
-			    
-			    if(($row['Kd_prosplvl']==1) or ($row['Kd_prosplvl']==6)){
-			      $tmp_dt_tb[]='V';
-			      $arrjml['pra'] = $this->fjml_ttl($arrjml,'pra',$jml_pra,'');
-			    }else{
-			      $tmp_dt_tb[]=' ';
-			    }
+	              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
+	              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
+	            
+	              $tmp_dt_tb[]=number_format($rc['j_pra_s'],0,',','.');
+	              $arrjml['j_pra_s']=$this->fjml_ttl($arrjml,'j_pra_s',$rc,'j_pra_s');            
+	            
+	              $tmp_dt_tb[]=number_format($rc['j_ks'],0,',','.');
+	              $arrjml['j_ks']=$this->fjml_ttl($arrjml,'j_ks',$rc,'j_ks'); 
+	            } else{
+	            	$tmp_dt_tb[]=$row['Kd_fam'];
+	               
+	                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
+				    $rc = $this->build_rc($data1);     
 
-			    if(($row['Kd_prosplvl']==2) or ($row['Kd_prosplvl']==7)){
-			      $tmp_dt_tb[]='V';
-			      $arrjml['ks'] = $this->fjml_ttl($arrjml,'ks',$jml_ks,'');
-			    }else{
-			      $tmp_dt_tb[]=' ';
-			    } 
-            }           
+				    $tmp_dt_tb[]=$rc['Nama'];
+				    $tmp_dt_tb[]=$row['jml_jiwa'];
+				    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
+				    
+				    if(($row['Kd_prosplvl']==1) or ($row['Kd_prosplvl']==6)){
+				      $tmp_dt_tb[]='V';
+				      $arrjml['pra'] = $this->fjml_ttl($arrjml,'pra',$jml_pra,'');
+				    }else{
+				      $tmp_dt_tb[]=' ';
+				    }
 
-			$dt_tb[] = $tmp_dt_tb;
-			$i++;
-		}	
-		
+				    if(($row['Kd_prosplvl']==2) or ($row['Kd_prosplvl']==7)){
+				      $tmp_dt_tb[]='V';
+				      $arrjml['ks'] = $this->fjml_ttl($arrjml,'ks',$jml_ks,'');
+				    }else{
+				      $tmp_dt_tb[]=' ';
+				    } 
+	            }           
+
+				$dt_tb[] = $tmp_dt_tb;
+				$i++;
+			}	
+		}
 		
 		$footer_tb=array();
 		$tmp_footer=array();       
@@ -302,90 +339,90 @@ class dt_rekapitulasi
 		$jml_ks_alek=1;
 		$jml_ks_non_alek=1;
 
-
-		foreach($data as $row)
-		{
-			$tmp_dt_tb=array();			
-
-			if(empty($idrt))
+        if(!empty($data)){
+			foreach($data as $row)
 			{
-			  $tmp_dt_tb[]=$i;
-			  $tmp_dt_tb[]=$row['no_unit_detail'];    
-			
+				$tmp_dt_tb=array();			
 
-			  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
-			  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
-			  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
-			  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
-			
-			  $data1 = $tb->getData("$kd_wlq (".$this->arr_ks['pra_s']." OR ".$this->arr_ks['ks_1'].") AND Kd_mutasi IS NULL");			
-			  $rc = $this->build_rc($data1);
-            
-              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
+				if(empty($idrt))
+				{
+				  $tmp_dt_tb[]=$i;
+				  $tmp_dt_tb[]=$row['no_unit_detail'];    
+				
 
-              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
-              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
-            
-              $tmp_dt_tb[]=number_format($rc['j_pra_s_alek'],0,',','.');
-              $arrjml['j_pra_s_alek']=$this->fjml_ttl($arrjml,'j_pra_s_alek',$rc,'j_pra_s_alek'); 
+				  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
+				  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
+				  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
+				  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
+				
+				  $data1 = $tb->getData("$kd_wlq (".$this->arr_ks['pra_s']." OR ".$this->arr_ks['ks_1'].") AND Kd_mutasi IS NULL");			
+				  $rc = $this->build_rc($data1);
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+	              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
 
-              $tmp_dt_tb[]=number_format($rc['j_pra_s_non_alek'],0,',','.');
-              $arrjml['j_pra_s_non_alek']=$this->fjml_ttl($arrjml,'j_pra_s_non_alek',$rc,'j_pra_s_non_alek');            
-            
-              $tmp_dt_tb[]=number_format($rc['j_ks_alek'],0,',','.');
-              $arrjml['j_ks_alek']=$this->fjml_ttl($arrjml,'j_ks_alek',$rc,'j_ks_alek');
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_jiwa');
+	              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_pra_s_alek');
+	              $arrjml['j_pra_s_alek']=$this->fjml_ttl($arrjml,'j_pra_s_alek',$rc,'j_pra_s_alek'); 
 
-              $tmp_dt_tb[]=number_format($rc['j_ks_non_alek'],0,',','.');
-              $arrjml['j_ks_non_alek']=$this->fjml_ttl($arrjml,'j_ks_non_alek',$rc,'j_ks_non_alek');
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_pra_s_non_alek');
+	              $arrjml['j_pra_s_non_alek']=$this->fjml_ttl($arrjml,'j_pra_s_non_alek',$rc,'j_pra_s_non_alek');            
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_ks_alek');
+	              $arrjml['j_ks_alek']=$this->fjml_ttl($arrjml,'j_ks_alek',$rc,'j_ks_alek');
 
-            } else{
-            	$tmp_dt_tb[]=$row['Kd_fam'];
-               
-                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
-			    $rc = $this->build_rc($data1);     
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_ks_non_alek');
+	              $arrjml['j_ks_non_alek']=$this->fjml_ttl($arrjml,'j_ks_non_alek',$rc,'j_ks_non_alek');
 
-			    $tmp_dt_tb[]=$rc['Nama'];
-			    $tmp_dt_tb[]=$row['jml_jiwa'];
-			    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
-			    
-			    if(($row['Kd_prosplvl']==6)){
-			      $tmp_dt_tb[]='V';
-			      $arrjml['pra_alek'] = $this->fjml_ttl($arrjml,'pra_alek',$jml_pra_alek,'');
-			    }else{
-			      $tmp_dt_tb[]=' ';
-			    }
+	            } else{
+	            	$tmp_dt_tb[]=$row['Kd_fam'];
+	               
+	                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
+				    $rc = $this->build_rc($data1);     
 
-			    if(($row['Kd_prosplvl']==1)){
-			      $tmp_dt_tb[]='V';
-			      $arrjml['pra_non_alek'] = $this->fjml_ttl($arrjml,'pra_non_alek',$jml_pra_non_alek,'');
-			    }else{
-			      $tmp_dt_tb[]=' ';
-			    }
+				    $tmp_dt_tb[]=$rc['Nama'];
+				    $tmp_dt_tb[]=$row['jml_jiwa'];
+				    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
+				    
+				    if(($row['Kd_prosplvl']==6)){
+				      $tmp_dt_tb[]='V';
+				      $arrjml['pra_alek'] = $this->fjml_ttl($arrjml,'pra_alek',$jml_pra_alek,'');
+				    }else{
+				      $tmp_dt_tb[]=' ';
+				    }
 
-
-			    if(($row['Kd_prosplvl']==7)){
-			      $tmp_dt_tb[]='V';
-			      $arrjml['ks_alek'] = $this->fjml_ttl($arrjml,'ks_alek',$jml_ks_alek,'');
-			    }else{
-			      $tmp_dt_tb[]=' ';
-			    } 
-
-			    if(($row['Kd_prosplvl']==2)){
-			      $tmp_dt_tb[]='V';
-			      $arrjml['ks_non_alek'] = $this->fjml_ttl($arrjml,'ks_non_alek',$jml_ks_non_alek,'');
-			    }else{
-			      $tmp_dt_tb[]=' ';
-			    } 
+				    if(($row['Kd_prosplvl']==1)){
+				      $tmp_dt_tb[]='V';
+				      $arrjml['pra_non_alek'] = $this->fjml_ttl($arrjml,'pra_non_alek',$jml_pra_non_alek,'');
+				    }else{
+				      $tmp_dt_tb[]=' ';
+				    }
 
 
+				    if(($row['Kd_prosplvl']==7)){
+				      $tmp_dt_tb[]='V';
+				      $arrjml['ks_alek'] = $this->fjml_ttl($arrjml,'ks_alek',$jml_ks_alek,'');
+				    }else{
+				      $tmp_dt_tb[]=' ';
+				    } 
 
-            }           
+				    if(($row['Kd_prosplvl']==2)){
+				      $tmp_dt_tb[]='V';
+				      $arrjml['ks_non_alek'] = $this->fjml_ttl($arrjml,'ks_non_alek',$jml_ks_non_alek,'');
+				    }else{
+				      $tmp_dt_tb[]=' ';
+				    } 
 
-			$dt_tb[] = $tmp_dt_tb;
-			$i++;
-		}	
-		
+
+
+	            }           
+
+				$dt_tb[] = $tmp_dt_tb;
+				$i++;
+			}	
+		}
 		
 		$footer_tb=array();
 		$tmp_footer=array();       
@@ -443,65 +480,65 @@ class dt_rekapitulasi
 		$jml_pra=1;
 		$jml_ks=1;
 
-
-		foreach($data as $row)
-		{
-			$tmp_dt_tb=array();			
-
-			if(empty($idrt))
+        if(!empty($data)){
+			foreach($data as $row)
 			{
-			  $tmp_dt_tb[]=$i;
-			  $tmp_dt_tb[]=$row['no_unit_detail'];    
-			
+				$tmp_dt_tb=array();			
 
-			  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
-			  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
-			  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
-			  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
-			
-			  $data1 = $tb->getData("$kd_wlq ($str_kb) AND (".$this->arr_ks['pra_s']." OR ".$this->arr_ks['ks_1'].") AND Kd_mutasi IS NULL");			
-			  $rc = $this->build_rc($data1);
-            
-              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
+				if(empty($idrt))
+				{
+				  $tmp_dt_tb[]=$i;
+				  $tmp_dt_tb[]=$row['no_unit_detail'];    
+				
 
-              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
-              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
-            
-              $tmp_dt_tb[]=number_format($rc['j_pra_s'],0,',','.');
-              $arrjml['j_pra_s']=$this->fjml_ttl($arrjml,'j_pra_s',$rc,'j_pra_s');            
-            
-              $tmp_dt_tb[]=number_format($rc['j_ks'],0,',','.');
-              $arrjml['j_ks']=$this->fjml_ttl($arrjml,'j_ks',$rc,'j_ks'); 
-            } else{
-            	$tmp_dt_tb[]=$row['Kd_fam'];
-               
-                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
-			    $rc = $this->build_rc($data1);     
+				  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
+				  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
+				  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
+				  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
+				
+				  $data1 = $tb->getData("$kd_wlq ($str_kb) AND (".$this->arr_ks['pra_s']." OR ".$this->arr_ks['ks_1'].") AND Kd_mutasi IS NULL");			
+				  $rc = $this->build_rc($data1);
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+	              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
 
-			    $tmp_dt_tb[]=$rc['Nama'];
-			    $tmp_dt_tb[]=$row['jml_jiwa'];
-			    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
-			    
-			    if(($row['Kd_prosplvl']==1) or ($row['Kd_prosplvl']==6)){
-			      $tmp_dt_tb[]='V';
-			      $arrjml['pra'] = $this->fjml_ttl($arrjml,'pra',$jml_pra,'');
-			    }else{
-			      $tmp_dt_tb[]=' ';
-			    }
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_jiwa');
+	              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_pra_s');
+	              $arrjml['j_pra_s']=$this->fjml_ttl($arrjml,'j_pra_s',$rc,'j_pra_s');            
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_ks');
+	              $arrjml['j_ks']=$this->fjml_ttl($arrjml,'j_ks',$rc,'j_ks'); 
+	            } else{
+	            	$tmp_dt_tb[]=$row['Kd_fam'];
+	               
+	                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
+				    $rc = $this->build_rc($data1);     
 
-			    if(($row['Kd_prosplvl']==2) or ($row['Kd_prosplvl']==7)){
-			      $tmp_dt_tb[]='V';
-			      $arrjml['ks'] = $this->fjml_ttl($arrjml,'ks',$jml_ks,'');
-			    }else{
-			      $tmp_dt_tb[]=' ';
-			    } 
-            }           
+				    $tmp_dt_tb[]=$rc['Nama'];
+				    $tmp_dt_tb[]=$row['jml_jiwa'];
+				    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
+				    
+				    if(($row['Kd_prosplvl']==1) or ($row['Kd_prosplvl']==6)){
+				      $tmp_dt_tb[]='V';
+				      $arrjml['pra'] = $this->fjml_ttl($arrjml,'pra',$jml_pra,'');
+				    }else{
+				      $tmp_dt_tb[]=' ';
+				    }
 
-			$dt_tb[] = $tmp_dt_tb;
-			$i++;
-		}	
-		
+				    if(($row['Kd_prosplvl']==2) or ($row['Kd_prosplvl']==7)){
+				      $tmp_dt_tb[]='V';
+				      $arrjml['ks'] = $this->fjml_ttl($arrjml,'ks',$jml_ks,'');
+				    }else{
+				      $tmp_dt_tb[]=' ';
+				    } 
+	            }           
+
+				$dt_tb[] = $tmp_dt_tb;
+				$i++;
+			}	
+		}
 		
 		$footer_tb=array();
 		$tmp_footer=array();       
@@ -669,308 +706,309 @@ class dt_rekapitulasi
 		$jml_pra=1;
 		$jml_ks=1;
 
-
-		foreach($data as $row)
-		{
-			$tmp_dt_tb=array();			
-
-			if(empty($idrt))
+        if(!empty($data))
+        {
+			foreach($data as $row)
 			{
-			  $tmp_dt_tb[]=$i;
-			  $tmp_dt_tb[]=$row['no_unit_detail'];
+				$tmp_dt_tb=array();			
 
-			  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
-			  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
-			  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
-			  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));
-              
-			  switch($ks)
-			  {
-			  	case 1 : switch($kb)
-			  	         {
-			  	         	case 1 :  
-			  	         	          $data1 = $tb->getData("$kd_wlq ($str_kb) and Kd_mutasi IS NULL");			
-									  $rc = $this->build_rc($data1);
-						            
-						              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-						              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
+				if(empty($idrt))
+				{
+				  $tmp_dt_tb[]=$i;
+				  $tmp_dt_tb[]=$row['no_unit_detail'];
 
-						              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
-						              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
-
-						              if(!empty($dt_contr)){
-											$jml=0;
-											foreach ($dt_contr as $row) {
-												$j_contyp="j_$row[Kd_contyp]";
-												$tmp_dt_tb[]=number_format($rc[$j_contyp],0,',','.');
-						                        $arrjml[$j_contyp]=$this->fjml_ttl($arrjml,$j_contyp,$rc,$j_contyp);
-						                        $jml=$this->fjml_ttl($jml,'',$rc[$j_contyp],'');				
-											}
-											$tmp_dt_tb[]=number_format($jml,0,',','.');
-											$arrjml['ttl']=$this->fjml_ttl($arrjml['ttl'],'',$jml,'');
-										} 
-
-			  	         	         break;
-			  	         	case 2 : $data1 = $tb->getData("$kd_wlq (Kd_nonacptr IS NOT NULL OR (Kd_nonacptr IS NULL AND pus='0')) AND Kd_mutasi IS NULL");			
-									  $rc = $this->build_rc($data1);
-						            
-						              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-						              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
-
-						              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
-						              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
-
-						              $tmp_dt_tb[]=number_format($rc['j_pus'],0,',','.');
-						              $arrjml['j_pus']=$this->fjml_ttl($arrjml,'j_pus',$rc,'j_pus');
-						              break;
-			  	         	case 3 : $data1 = $tb->getData("$kd_wlq Kd_mutasi IS NULL");			
-									  $rc = $this->build_rc($data1);
-						            
-						              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-						              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
-
-						              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
-						              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
-
-						              $tmp_dt_tb[]=number_format($rc['j_pus'],0,',','.');
-						              $arrjml['j_pus']=$this->fjml_ttl($arrjml,'j_pus',$rc,'j_pus');
-
-						              $tmp_dt_tb[]=number_format($rc['j_kb'],0,',','.');
-						              $arrjml['j_kb']=$this->fjml_ttl($arrjml,'j_kb',$rc,'j_kb');
-
-						              $tmp_dt_tb[]=number_format($rc['j_nonkb'],0,',','.');
-						              $arrjml['j_nonkb']=$this->fjml_ttl($arrjml,'j_nonkb',$rc,'j_nonkb');
-						              break;
-			  	         }
-			  	         break;
-			  	case 2 : switch($kb)
-			  	         {
-			  	         	case 1 : 
-			  	         	          $data1 = $tb->getData("$kd_wlq ($str_kb) AND Kd_mutasi IS NULL");			
-									  $rc = $this->build_rc($data1);
-						            
-						              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-						              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
-
-						              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
-						              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
-
-						              if(!empty($dt_contr)){
-											$jml=0;
-											foreach ($dt_contr as $row) {
-												$j_contyp="j_$row[Kd_contyp]_pra_s";
-												$tmp_dt_tb[]=number_format($rc[$j_contyp],0,',','.');
-						                        $arrjml[$j_contyp]=$this->fjml_ttl($arrjml,$j_contyp,$rc,$j_contyp);
-						                        $jml=$this->fjml_ttl($jml,'',$rc[$j_contyp],'');				
-											}
-											$tmp_dt_tb[]=number_format($jml,0,',','.');
-											$arrjml['ttl']=$this->fjml_ttl($arrjml['ttl'],'',$jml,'');
-
-											$jml=0;
-											foreach ($dt_contr as $row) {
-												$j_contyp="j_$row[Kd_contyp]_ks";
-												$tmp_dt_tb[]=number_format($rc[$j_contyp],0,',','.');
-						                        $arrjml[$j_contyp]=$this->fjml_ttl($arrjml,$j_contyp,$rc,$j_contyp);
-						                        $jml=$this->fjml_ttl($jml,'',$rc[$j_contyp],'');				
-											}
-											$tmp_dt_tb[]=number_format($jml,0,',','.');
-											$arrjml['ttl1']=$this->fjml_ttl($arrjml['ttl1'],'',$jml,'');
-										} 
-
-			  	         	          break;
-			  	         	case 2 :  
-			  	         	          $data1 = $tb->getData("$kd_wlq ($str_kb) AND (".$this->arr_ks['pra_s']." OR ".$this->arr_ks['ks_1'].") AND Kd_mutasi IS NULL");			
-									  $rc = $this->build_rc($data1);
-						            
-						              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-						              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
-
-						              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
-						              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
-						            
-						              $tmp_dt_tb[]=number_format($rc['j_pra_s'],0,',','.');
-						              $arrjml['j_pra_s']=$this->fjml_ttl($arrjml,'j_pra_s',$rc,'j_pra_s');            
-						            
-						              $tmp_dt_tb[]=number_format($rc['j_ks'],0,',','.');
-						              $arrjml['j_ks']=$this->fjml_ttl($arrjml,'j_ks',$rc,'j_ks'); 
-
-			  	         	         break;
-			  	         	case 3 :  
-			  	         	          $data1 = $tb->getData("$kd_wlq (".$this->arr_ks['pra_s']." OR ".$this->arr_ks['ks_1'].") AND Kd_mutasi IS NULL");			
-									  $rc = $this->build_rc($data1);
-						            
-						              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-						              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
-
-						              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
-						              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
-
-						              $tmp_dt_tb[]=number_format($rc['j_pus'],0,',','.');
-						              $arrjml['j_pus']=$this->fjml_ttl($arrjml,'j_pus',$rc,'j_pus');
-						              
-						              $tmp_dt_tb[]=number_format($rc['j_pra_s_kb'],0,',','.');
-						              $arrjml['j_pra_s_kb']=$this->fjml_ttl($arrjml,'j_pra_s_kb',$rc,'j_pra_s_kb');
-
-						              $tmp_dt_tb[]=number_format($rc['j_ks_kb'],0,',','.');
-						              $arrjml['j_ks_kb']=$this->fjml_ttl($arrjml,'j_ks_kb',$rc,'j_ks_kb');
-
-						              $tmp_dt_tb[]=number_format($rc['j_pra_s_kb']+$rc['j_ks_kb'],0,',','.');
-						              $arrjml['j_kb']=$this->fjml_ttl($arrjml['j_kb'],'',$rc['j_pra_s_kb']+$rc['j_ks_kb'],'');
-
-						              $tmp_dt_tb[]=number_format($rc['j_pra_s_nonkb'],0,',','.');
-						              $arrjml['j_pra_s_nonkb']=$this->fjml_ttl($arrjml,'j_pra_s_nonkb',$rc,'j_pra_s_nonkb');
-
-						              $tmp_dt_tb[]=number_format($rc['j_ks_nonkb'],0,',','.');
-						              $arrjml['j_ks_nonkb']=$this->fjml_ttl($arrjml,'j_ks_nonkb',$rc,'j_ks_nonkb');
-
-						              $tmp_dt_tb[]=number_format($rc['j_pra_s_nonkb']+$rc['j_ks_nonkb'],0,',','.');
-						              $arrjml['j_nonkb']=$this->fjml_ttl($arrjml['j_nonkb'],'',$rc['j_pra_s_nonkb']+$rc['j_ks_nonkb'],'');
-
-			  	         	         break;
-			  	         }
-			  	         break;
-			  }    
-			
-
-			            
-			
-			  
-            } else{
-            	
-            	   $tmp_dt_tb[]=$row['Kd_fam'];
-               
-                   $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
-			       $rc = $this->build_rc($data1); 
-
-			       $tmp_dt_tb[]=$rc['Nama'];
-
-			       $tmp_dt_tb[]=$row['j_jiwa'];
-			       $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$row,'j_jiwa');
-
-
-            	   switch($ks)
+				  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
+				  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
+				  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
+				  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));
+	              
+				  switch($ks)
 				  {
 				  	case 1 : switch($kb)
 				  	         {
-				  	         	case 1 : if(!empty($dt_contr)){
-											
-											foreach ($dt_contr as $row1) {
-												$tmp_dt_tb[]= $row1['Kd_contyp']== $row['Kd_contyp'] ? 'V' : '';
-												$arrjml[$row1['Kd_contyp']] = $this->fjml_ttl($arrjml,$row1['Kd_contyp'],$row1['Kd_contyp']== $row['Kd_contyp'] ? 1 : 0,'');
-											}
-											
-										} 
-				  	         	         break;
-				  	         	case 2 : 
-                                         $tmp_dt_tb[]= $row['pus']==1 ? 'V' : '';
-                                         $arrjml['pus'] = $this->fjml_ttl($arrjml,'pus',$row['pus']==1 ? 1 : 0,'');
-				  	         	         break;
-				  	         	case 3 : $tmp_dt_tb[]= $row['pus']==1 ? 'V' : '';
-                                         $arrjml['pus'] = $this->fjml_ttl($arrjml,'pus',$row['pus']==1 ? 1 : 0,'');
+				  	         	case 1 :  
+				  	         	          $data1 = $tb->getData("$kd_wlq ($str_kb) and Kd_mutasi IS NULL");			
+										  $rc = $this->build_rc($data1);
+							            
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+							              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
 
-                                         if($row['Kd_nonacptr']!=NULL)
-                                         {
-                                             $tmp_dt_tb[]= '';                                             
-                                             $tmp_dt_tb[]= 'V';
-                                             $arrjml['nonkb'] = $this->fjml_ttl($arrjml,'nonkb',1,'');
-                                         }else if($row['Kd_nonacptr']==NULL AND $row['pus']==0){
-                                             $tmp_dt_tb[]= '';                                             
-                                             $tmp_dt_tb[]= 'V';
-                                             $arrjml['nonkb'] = $this->fjml_ttl($arrjml,'nonkb',1,'');
-                                         }else{
-                                         	 $tmp_dt_tb[]= 'V';
-                                         	 $arrjml['kb'] = $this->fjml_ttl($arrjml,'kb',1,'');
-                                         	 $tmp_dt_tb[]= '';
-                                         }
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_jiwa');
+							              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
+
+							              if(!empty($dt_contr)){
+												$jml=0;
+												foreach ($dt_contr as $row) {
+													$j_contyp="j_$row[Kd_contyp]";
+													$tmp_dt_tb[]=$this->frupiah($rc,$j_contyp);
+							                        $arrjml[$j_contyp]=$this->fjml_ttl($arrjml,$j_contyp,$rc,$j_contyp);
+							                        $jml=$this->fjml_ttl($jml,'',$rc,$j_contyp);				
+												}
+												$tmp_dt_tb[]=number_format($jml,0,',','.');
+												$arrjml['ttl']=$this->fjml_ttl($arrjml,'ttl',$jml,'');
+											} 
+
 				  	         	         break;
+				  	         	case 2 : $data1 = $tb->getData("$kd_wlq (Kd_nonacptr IS NOT NULL OR (Kd_nonacptr IS NULL AND pus='0')) AND Kd_mutasi IS NULL");			
+										  $rc = $this->build_rc($data1);
+							            
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+							              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
+
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_jiwa');
+							              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
+
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_pus');
+							              $arrjml['j_pus']=$this->fjml_ttl($arrjml,'j_pus',$rc,'j_pus');
+							              break;
+				  	         	case 3 : $data1 = $tb->getData("$kd_wlq Kd_mutasi IS NULL");			
+										  $rc = $this->build_rc($data1);
+							            
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+							              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
+
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_jiwa');
+							              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
+
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_pus');
+							              $arrjml['j_pus']=$this->fjml_ttl($arrjml,'j_pus',$rc,'j_pus');
+
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_kb');
+							              $arrjml['j_kb']=$this->fjml_ttl($arrjml,'j_kb',$rc,'j_kb');
+
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_nonkb');
+							              $arrjml['j_nonkb']=$this->fjml_ttl($arrjml,'j_nonkb',$rc,'j_nonkb');
+							              break;
 				  	         }
 				  	         break;
 				  	case 2 : switch($kb)
 				  	         {
-				  	         	case 1 : if(!empty($dt_contr)){
-											
-											foreach ($dt_contr as $row1) {
-												$tmp_dt_tb[]= (($row['Kd_prosplvl']==1 or $row['Kd_prosplvl']==6) and ($row1['Kd_contyp']== $row['Kd_contyp'])) ? 'V' : '';
-												$arrjml[$row1['Kd_contyp'].'_pra_s'] = $this->fjml_ttl($arrjml,$row1['Kd_contyp'].'_pra_s',
-													((($row['Kd_prosplvl']==1 or $row['Kd_prosplvl']==6) and ($row1['Kd_contyp']== $row['Kd_contyp'])) ? 1 : 0),'');
-											}
+				  	         	case 1 : 
+				  	         	          $data1 = $tb->getData("$kd_wlq ($str_kb) AND Kd_mutasi IS NULL");			
+										  $rc = $this->build_rc($data1);
+							            
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+							              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
 
-											foreach ($dt_contr as $row1) {
-												$tmp_dt_tb[]= (($row['Kd_prosplvl']==2 or $row['Kd_prosplvl']==7) and ($row1['Kd_contyp']== $row['Kd_contyp'])) ? 'V' : '';
-												$arrjml[$row1['Kd_contyp'].'_ks'] = $this->fjml_ttl($arrjml,$row1['Kd_contyp'].'_ks',
-													((($row['Kd_prosplvl']==2 or $row['Kd_prosplvl']==7) and ($row1['Kd_contyp']== $row['Kd_contyp'])) ? 1 : 0),'');
-											}
-											
-										} 
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_jiwa');
+							              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
+
+							              if(!empty($dt_contr)){
+												$jml=0;
+												foreach ($dt_contr as $row) {
+													$j_contyp="j_$row[Kd_contyp]_pra_s";
+													$tmp_dt_tb[]=$this->frupiah($rc,$j_contyp);
+							                        $arrjml[$j_contyp]=$this->fjml_ttl($arrjml,$j_contyp,$rc,$j_contyp);
+							                        $jml=$this->fjml_ttl($jml,'',$rc,$j_contyp);				
+												}
+												$tmp_dt_tb[]=number_format($jml,0,',','.');
+												$arrjml['ttl']=$this->fjml_ttl($arrjml,'ttl',$jml,'');
+
+												$jml=0;
+												foreach ($dt_contr as $row) {
+													$j_contyp="j_$row[Kd_contyp]_ks";
+													$tmp_dt_tb[]=$this->frupiah($rc,$j_contyp);
+							                        $arrjml[$j_contyp]=$this->fjml_ttl($arrjml,$j_contyp,$rc,$j_contyp);
+							                        $jml=$this->fjml_ttl($jml,'',$rc,$j_contyp);				
+												}
+												$tmp_dt_tb[]=number_format($jml,0,',','.');
+												$arrjml['ttl1']=$this->fjml_ttl($arrjml,'ttl1',$jml,'');
+											} 
+
+				  	         	          break;
+				  	         	case 2 :  
+				  	         	          $data1 = $tb->getData("$kd_wlq ($str_kb) AND (".$this->arr_ks['pra_s']." OR ".$this->arr_ks['ks_1'].") AND Kd_mutasi IS NULL");			
+										  $rc = $this->build_rc($data1);
+							            
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+							              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
+
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_jiwa');
+							              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
+							            
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_pra_s');
+							              $arrjml['j_pra_s']=$this->fjml_ttl($arrjml,'j_pra_s',$rc,'j_pra_s');            
+							            
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_ks');
+							              $arrjml['j_ks']=$this->fjml_ttl($arrjml,'j_ks',$rc,'j_ks'); 
+
 				  	         	         break;
-				  	         	case 2 :    if(($row['Kd_prosplvl']==1) or ($row['Kd_prosplvl']==6)){
-										      $tmp_dt_tb[]='V';
-										      $arrjml['pra'] = $this->fjml_ttl($arrjml,'pra',$jml_pra,'');
-										    }else{
-										      $tmp_dt_tb[]=' ';
-										    }
+				  	         	case 3 :  
+				  	         	          $data1 = $tb->getData("$kd_wlq (".$this->arr_ks['pra_s']." OR ".$this->arr_ks['ks_1'].") AND Kd_mutasi IS NULL");			
+										  $rc = $this->build_rc($data1);
+							            
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+							              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
 
-										    if(($row['Kd_prosplvl']==2) or ($row['Kd_prosplvl']==7)){
-										      $tmp_dt_tb[]='V';
-										      $arrjml['ks'] = $this->fjml_ttl($arrjml,'ks',$jml_ks,'');
-										    }else{
-										      $tmp_dt_tb[]=' ';
-										    } 
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_jiwa');
+							              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
 
-				  	         	         break;
-				  	         	case 3 :   
-                                            if($row['pus']==1)
-                                            {
-                                              $tmp_dt_tb[]='V';
-										      $arrjml['pus'] = $this->fjml_ttl($arrjml,'pus',1,'');
-                                            } else{
-                                              $tmp_dt_tb[]=' ';
-                                            }
-				  	         	            
-				  	         	            if(($row['pus']==1) and ($row['Kd_nonacptr']==null) and (($row['Kd_prosplvl']==1) or ($row['Kd_prosplvl']==6))){
-										       $tmp_dt_tb[]='V';
-										       $arrjml['pra_kb'] = $this->fjml_ttl($arrjml,'pra_kb',1,'');
-										    }else{
-										       $tmp_dt_tb[]=' ';
-										    }
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_pus');
+							              $arrjml['j_pus']=$this->fjml_ttl($arrjml,'j_pus',$rc,'j_pus');
+							              
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_pra_s_kb');
+							              $arrjml['j_pra_s_kb']=$this->fjml_ttl($arrjml,'j_pra_s_kb',$rc,'j_pra_s_kb');
 
-										    if(($row['pus']==1) and ($row['Kd_nonacptr']==null) and (($row['Kd_prosplvl']==2) or ($row['Kd_prosplvl']==7))){
-										      $tmp_dt_tb[]='V';
-										      $arrjml['ks_kb'] = $this->fjml_ttl($arrjml,'ks_kb',1,'');
-										    }else{
-										      $tmp_dt_tb[]=' ';
-										    } 
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_ks_kb');
+							              $arrjml['j_ks_kb']=$this->fjml_ttl($arrjml,'j_ks_kb',$rc,'j_ks_kb');
 
-										    if(($row['pus']==1) and ($row['Kd_nonacptr']!=null) and (($row['Kd_prosplvl']==1) or ($row['Kd_prosplvl']==6))){
-										       $tmp_dt_tb[]='V';
-										       $arrjml['pra_nonkb'] = $this->fjml_ttl($arrjml,'pra_nonkb',1,'');
-										    }else{
-										       $tmp_dt_tb[]=' ';
-										    }
+							              $tmp_dt_tb[]=$this->frupiah($this->fjml_ttl($rc,'j_pra_s_kb',$rc,'j_ks_kb'),'');
+							              $arrjml['j_kb']=$this->fjml_ttl($arrjml,'j_kb',$this->fjml_ttl($rc,'j_pra_s_kb',$rc,'j_ks_kb'),'');
 
-										    if(($row['pus']==1) and ($row['Kd_nonacptr']!=null) and (($row['Kd_prosplvl']==2) or ($row['Kd_prosplvl']==7))){
-										      $tmp_dt_tb[]='V';
-										      $arrjml['ks_nonkb'] = $this->fjml_ttl($arrjml,'ks_nonkb',1,'');
-										    }else{
-										      $tmp_dt_tb[]=' ';
-										    } 
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_pra_s_nonkb');
+							              $arrjml['j_pra_s_nonkb']=$this->fjml_ttl($arrjml,'j_pra_s_nonkb',$rc,'j_pra_s_nonkb');
+
+							              $tmp_dt_tb[]=$this->frupiah($rc,'j_ks_nonkb');
+							              $arrjml['j_ks_nonkb']=$this->fjml_ttl($arrjml,'j_ks_nonkb',$rc,'j_ks_nonkb');
+
+							              $tmp_dt_tb[]=$this->frupiah($this->fjml_ttl($rc,'j_pra_s_nonkb',$rc,'j_ks_nonkb'),'');
+							              $arrjml['j_nonkb']=$this->fjml_ttl($arrjml,'j_nonkb',$this->fjml_ttl($rc,'j_pra_s_nonkb',$rc,'j_ks_nonkb'),'');
 
 				  	         	         break;
 				  	         }
 				  	         break;
-				  }
+				  }    
+				
+
+				            
+				
+				  
+	            } else{
+	            	
+	            	   $tmp_dt_tb[]=$row['Kd_fam'];
+	               
+	                   $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
+				       $rc = $this->build_rc($data1); 
+
+				       $tmp_dt_tb[]=$rc['Nama'];
+
+				       $tmp_dt_tb[]=$row['j_jiwa'];
+				       $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$row,'j_jiwa');
 
 
-            	
-			    
-			    
-			    
-            }           
+	            	   switch($ks)
+					  {
+					  	case 1 : switch($kb)
+					  	         {
+					  	         	case 1 : if(!empty($dt_contr)){
+												
+												foreach ($dt_contr as $row1) {
+													$tmp_dt_tb[]= $row1['Kd_contyp']== $row['Kd_contyp'] ? 'V' : '';
+													$arrjml[$row1['Kd_contyp']] = $this->fjml_ttl($arrjml,$row1['Kd_contyp'],$row1['Kd_contyp']== $row['Kd_contyp'] ? 1 : 0,'');
+												}
+												
+											} 
+					  	         	         break;
+					  	         	case 2 : 
+	                                         $tmp_dt_tb[]= $row['pus']==1 ? 'V' : '';
+	                                         $arrjml['pus'] = $this->fjml_ttl($arrjml,'pus',$row['pus']==1 ? 1 : 0,'');
+					  	         	         break;
+					  	         	case 3 : $tmp_dt_tb[]= $row['pus']==1 ? 'V' : '';
+	                                         $arrjml['pus'] = $this->fjml_ttl($arrjml,'pus',$row['pus']==1 ? 1 : 0,'');
 
-			$dt_tb[] = $tmp_dt_tb;
-			$i++;
-		}	
-		
+	                                         if($row['Kd_nonacptr']!=NULL)
+	                                         {
+	                                             $tmp_dt_tb[]= '';                                             
+	                                             $tmp_dt_tb[]= 'V';
+	                                             $arrjml['nonkb'] = $this->fjml_ttl($arrjml,'nonkb',1,'');
+	                                         }else if($row['Kd_nonacptr']==NULL AND $row['pus']==0){
+	                                             $tmp_dt_tb[]= '';                                             
+	                                             $tmp_dt_tb[]= 'V';
+	                                             $arrjml['nonkb'] = $this->fjml_ttl($arrjml,'nonkb',1,'');
+	                                         }else{
+	                                         	 $tmp_dt_tb[]= 'V';
+	                                         	 $arrjml['kb'] = $this->fjml_ttl($arrjml,'kb',1,'');
+	                                         	 $tmp_dt_tb[]= '';
+	                                         }
+					  	         	         break;
+					  	         }
+					  	         break;
+					  	case 2 : switch($kb)
+					  	         {
+					  	         	case 1 : if(!empty($dt_contr)){
+												
+												foreach ($dt_contr as $row1) {
+													$tmp_dt_tb[]= (($row['Kd_prosplvl']==1 or $row['Kd_prosplvl']==6) and ($row1['Kd_contyp']== $row['Kd_contyp'])) ? 'V' : '';
+													$arrjml[$row1['Kd_contyp'].'_pra_s'] = $this->fjml_ttl($arrjml,$row1['Kd_contyp'].'_pra_s',
+														((($row['Kd_prosplvl']==1 or $row['Kd_prosplvl']==6) and ($row1['Kd_contyp']== $row['Kd_contyp'])) ? 1 : 0),'');
+												}
+
+												foreach ($dt_contr as $row1) {
+													$tmp_dt_tb[]= (($row['Kd_prosplvl']==2 or $row['Kd_prosplvl']==7) and ($row1['Kd_contyp']== $row['Kd_contyp'])) ? 'V' : '';
+													$arrjml[$row1['Kd_contyp'].'_ks'] = $this->fjml_ttl($arrjml,$row1['Kd_contyp'].'_ks',
+														((($row['Kd_prosplvl']==2 or $row['Kd_prosplvl']==7) and ($row1['Kd_contyp']== $row['Kd_contyp'])) ? 1 : 0),'');
+												}
+												
+											} 
+					  	         	         break;
+					  	         	case 2 :    if(($row['Kd_prosplvl']==1) or ($row['Kd_prosplvl']==6)){
+											      $tmp_dt_tb[]='V';
+											      $arrjml['pra'] = $this->fjml_ttl($arrjml,'pra',$jml_pra,'');
+											    }else{
+											      $tmp_dt_tb[]=' ';
+											    }
+
+											    if(($row['Kd_prosplvl']==2) or ($row['Kd_prosplvl']==7)){
+											      $tmp_dt_tb[]='V';
+											      $arrjml['ks'] = $this->fjml_ttl($arrjml,'ks',$jml_ks,'');
+											    }else{
+											      $tmp_dt_tb[]=' ';
+											    } 
+
+					  	         	         break;
+					  	         	case 3 :   
+	                                            if($row['pus']==1)
+	                                            {
+	                                              $tmp_dt_tb[]='V';
+											      $arrjml['pus'] = $this->fjml_ttl($arrjml,'pus',1,'');
+	                                            } else{
+	                                              $tmp_dt_tb[]=' ';
+	                                            }
+					  	         	            
+					  	         	            if(($row['pus']==1) and ($row['Kd_nonacptr']==null) and (($row['Kd_prosplvl']==1) or ($row['Kd_prosplvl']==6))){
+											       $tmp_dt_tb[]='V';
+											       $arrjml['pra_kb'] = $this->fjml_ttl($arrjml,'pra_kb',1,'');
+											    }else{
+											       $tmp_dt_tb[]=' ';
+											    }
+
+											    if(($row['pus']==1) and ($row['Kd_nonacptr']==null) and (($row['Kd_prosplvl']==2) or ($row['Kd_prosplvl']==7))){
+											      $tmp_dt_tb[]='V';
+											      $arrjml['ks_kb'] = $this->fjml_ttl($arrjml,'ks_kb',1,'');
+											    }else{
+											      $tmp_dt_tb[]=' ';
+											    } 
+
+											    if(($row['pus']==1) and ($row['Kd_nonacptr']!=null) and (($row['Kd_prosplvl']==1) or ($row['Kd_prosplvl']==6))){
+											       $tmp_dt_tb[]='V';
+											       $arrjml['pra_nonkb'] = $this->fjml_ttl($arrjml,'pra_nonkb',1,'');
+											    }else{
+											       $tmp_dt_tb[]=' ';
+											    }
+
+											    if(($row['pus']==1) and ($row['Kd_nonacptr']!=null) and (($row['Kd_prosplvl']==2) or ($row['Kd_prosplvl']==7))){
+											      $tmp_dt_tb[]='V';
+											      $arrjml['ks_nonkb'] = $this->fjml_ttl($arrjml,'ks_nonkb',1,'');
+											    }else{
+											      $tmp_dt_tb[]=' ';
+											    } 
+
+					  	         	         break;
+					  	         }
+					  	         break;
+					  }
+
+
+	            	
+				    
+				    
+				    
+	            }           
+
+				$dt_tb[] = $tmp_dt_tb;
+				$i++;
+			}	
+		}
 		
 		$footer_tb=array();
 		$tmp_footer=array();       
@@ -1037,82 +1075,82 @@ class dt_rekapitulasi
 		$jml_pra=1;
 		$jml_ks=1;
 
-
-		foreach($data as $row)
-		{
-			$tmp_dt_tb=array();			
-
-			if(empty($idrt))
+        if(!empty($data)){
+			foreach($data as $row)
 			{
-			  $tmp_dt_tb[]=$i;
-			  $tmp_dt_tb[]=$row['no_unit_detail'];    
-			
+				$tmp_dt_tb=array();			
 
-			  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
-			  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
-			  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
-			  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt),'','');          
-			
-			  $data1 = $tb->getData("$kd_wlq");			
-			  $rc = $this->build_rc($data1);
-            
-              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
+				if(empty($idrt))
+				{
+				  $tmp_dt_tb[]=$i;
+				  $tmp_dt_tb[]=$row['no_unit_detail'];    
+				
 
-              $tmp_dt_tb[]=number_format($rc['j_pus'],0,',','.');
-              $arrjml['j_pus']=$this->fjml_ttl($arrjml,'j_pus',$rc,'j_pus');
-              
-              if(!empty($dt_contr)){
-                 $jml = 0;			     
-			     foreach ($dt_contr as $row) {
-				   $str="j_$row[Kd_contyp]";
-			       $tmp_dt_tb[]=number_format($rc[$str],0,',','.');
-                   $arrjml[$str]=$this->fjml_ttl($arrjml,$str,$rc,$str);
-                   $jml=$this->fjml_ttl($jml,'',$rc[$str],'');	   
-			     }
-                   $tmp_dt_tb[]=number_format($jml,0,',','.');
-                   $arrjml['jml']=$this->fjml_ttl($arrjml['jml'],'',$jml,'');
-                   $tmp_dt_tb[]=number_format($this->fprosen($jml,'',$rc['j_pus'],''),2,',','.').'%';
-		      }
-            
-               
-            } else{
-            	$tmp_dt_tb[]=$row['Kd_fam'];
-               
-                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
-			    $rc = $this->build_rc($data1);     
+				  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
+				  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
+				  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
+				  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt),'','');          
+				
+				  $data1 = $tb->getData("$kd_wlq");			
+				  $rc = $this->build_rc($data1);
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+	              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
 
-			    $tmp_dt_tb[]=$rc['Nama'];
-			    $tmp_dt_tb[]=$row['jml_jiwa'];
-			    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
-			    
-			    if($row['pus']==1)
-			    {
-                  $tmp_dt_tb[]='V';
-			      $arrjml['j_pus']=$this->fjml_ttl($arrjml['j_pus'],'',1,'');
-			    }else{
-			    	$tmp_dt_tb[]='';
-			    }
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_pus');
+	              $arrjml['j_pus']=$this->fjml_ttl($arrjml,'j_pus',$rc,'j_pus');
+	              
+	              if(!empty($dt_contr)){
+	                 $jml = 0;			     
+				     foreach ($dt_contr as $row) {
+					   $str="j_$row[Kd_contyp]";
+				       $tmp_dt_tb[]=$this->frupiah($rc,$str);
+	                   $arrjml[$str]=$this->fjml_ttl($arrjml,$str,$rc,$str);
+	                   $jml=$this->fjml_ttl($jml,'',$rc,$str);	   
+				     }
+	                   $tmp_dt_tb[]=number_format($jml,0,',','.');
+	                   $arrjml['jml']=$this->fjml_ttl($arrjml,'jml',$jml,'');
+	                   $tmp_dt_tb[]=number_format($this->fprosen($jml,'',$rc,'j_pus'),2,',','.').'%';
+			      }
+	            
+	               
+	            } else{
+	            	$tmp_dt_tb[]=$row['Kd_fam'];
+	               
+	                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
+				    $rc = $this->build_rc($data1);     
 
-			    if(!empty($dt_contr)){                 			     
-			     foreach ($dt_contr as $row1) {
-				    if($row['Kd_contyp']==$row1['Kd_contyp'])
+				    $tmp_dt_tb[]=$rc['Nama'];
+				    $tmp_dt_tb[]=$row['jml_jiwa'];
+				    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
+				    
+				    if($row['pus']==1)
 				    {
-                      $tmp_dt_tb[]='V';
-                      $str="j_$row1[Kd_contyp]";
-			          $arrjml[$str]=$this->fjml_ttl($arrjml[$str],'',1,'');
-				    } else{
+	                  $tmp_dt_tb[]='V';
+				      $arrjml['j_pus']=$this->fjml_ttl($arrjml['j_pus'],'',1,'');
+				    }else{
 				    	$tmp_dt_tb[]='';
-				    }                	   
-			     }
-		      }
-			     
-            }           
+				    }
 
-			$dt_tb[] = $tmp_dt_tb;
-			$i++;
-		}	
-		
+				    if(!empty($dt_contr)){                 			     
+				     foreach ($dt_contr as $row1) {
+					    if($row['Kd_contyp']==$row1['Kd_contyp'])
+					    {
+	                      $tmp_dt_tb[]='V';
+	                      $str="j_$row1[Kd_contyp]";
+				          $arrjml[$str]=$this->fjml_ttl($arrjml[$str],'',1,'');
+					    } else{
+					    	$tmp_dt_tb[]='';
+					    }                	   
+				     }
+			      }
+				     
+	            }           
+
+				$dt_tb[] = $tmp_dt_tb;
+				$i++;
+			}	
+		}
 		
 		$footer_tb=array();
 		$tmp_footer=array();
@@ -1171,61 +1209,61 @@ class dt_rekapitulasi
 		$jml_pra=1;
 		$jml_ks=1;
 
-
-		foreach($data as $row)
-		{
-			$tmp_dt_tb=array();			
-
-			if(empty($idrt))
+        if(!empty($data)){ 
+			foreach($data as $row)
 			{
-			  $tmp_dt_tb[]=$i;
-			  $tmp_dt_tb[]=$row['no_unit_detail'];    
-			
+				$tmp_dt_tb=array();			
 
-			  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
-			  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
-			  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
-			  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
-			
-			  $data1 = $tb->getData("$kd_wlq Kd_mutasi IS NULL");			
-			  $rc = $this->build_rc($data1);
-            
-              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
+				if(empty($idrt))
+				{
+				  $tmp_dt_tb[]=$i;
+				  $tmp_dt_tb[]=$row['no_unit_detail'];    
+				
 
-              $tmp_dt_tb[]=number_format($rc['j_l'],0,',','.');
-              $arrjml['j_l']=$this->fjml_ttl($arrjml,'j_l',$rc,'j_l');
+				  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
+				  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
+				  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
+				  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
+				
+				  $data1 = $tb->getData("$kd_wlq Kd_mutasi IS NULL");			
+				  $rc = $this->build_rc($data1);
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+	              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
 
-              $tmp_dt_tb[]=number_format($rc['j_p'],0,',','.');
-              $arrjml['j_p']=$this->fjml_ttl($arrjml,'j_p',$rc,'j_p');
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_l');
+	              $arrjml['j_l']=$this->fjml_ttl($arrjml,'j_l',$rc,'j_l');
 
-              $tmp_dt_tb[]=number_format($rc['jml'],0,',','.');
-              $arrjml['jml']=$this->fjml_ttl($arrjml,'jml',$rc,'jml');
-           
-               
-            } else{
-            	$tmp_dt_tb[]=$row['Kd_fam'];
-               
-                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
-			    $rc = $this->build_rc($data1);     
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_p');
+	              $arrjml['j_p']=$this->fjml_ttl($arrjml,'j_p',$rc,'j_p');
 
-			    $tmp_dt_tb[]=$rc['Nama'];
-			    
-			    $tmp_dt_tb[]=number_format($row['j_l'],0,',','.');
-                $arrjml['j_l']=$this->fjml_ttl($arrjml,'j_l',$row,'j_l');
+	              $tmp_dt_tb[]=$this->frupiah($rc,'jml');
+	              $arrjml['jml']=$this->fjml_ttl($arrjml,'jml',$rc,'jml');
+	           
+	               
+	            } else{
+	            	$tmp_dt_tb[]=$row['Kd_fam'];
+	               
+	                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
+				    $rc = $this->build_rc($data1);     
 
-                $tmp_dt_tb[]=number_format($row['j_p'],0,',','.');
-                $arrjml['j_p']=$this->fjml_ttl($arrjml,'j_p',$row,'j_p');
+				    $tmp_dt_tb[]=$rc['Nama'];
+				    
+				    $tmp_dt_tb[]=number_format($row['j_l'],0,',','.');
+	                $arrjml['j_l']=$this->fjml_ttl($arrjml,'j_l',$row,'j_l');
 
-                $tmp_dt_tb[]=number_format($row['jml'],0,',','.');
-                $arrjml['jml']=$this->fjml_ttl($arrjml,'jml',$row,'jml');		   
-			     
-            }           
+	                $tmp_dt_tb[]=number_format($row['j_p'],0,',','.');
+	                $arrjml['j_p']=$this->fjml_ttl($arrjml,'j_p',$row,'j_p');
 
-			$dt_tb[] = $tmp_dt_tb;
-			$i++;
-		}	
-		
+	                $tmp_dt_tb[]=number_format($row['jml'],0,',','.');
+	                $arrjml['jml']=$this->fjml_ttl($arrjml,'jml',$row,'jml');		   
+				     
+	            }           
+
+				$dt_tb[] = $tmp_dt_tb;
+				$i++;
+			}	
+		}
 		
 		$footer_tb=array();
 		$tmp_footer=array();		       
@@ -1287,63 +1325,63 @@ class dt_rekapitulasi
 		$jml_pra=1;
 		$jml_ks=1;
 
-
-		foreach($data as $row)
-		{
-			$tmp_dt_tb=array();			
-
-			if(empty($idrt))
+        if(!empty($data)){
+			foreach($data as $row)
 			{
-			  $tmp_dt_tb[]=$i;
-			  $tmp_dt_tb[]=$row['no_unit_detail'];    
-			
+				$tmp_dt_tb=array();			
 
-			  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
-			  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
-			  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
-			  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
-			
-			  $data1 = $tb->getData("$kd_wlq ($umur) and Kd_mutasi IS NULL");			
-			  $rc = $this->build_rc($data1);
-            
-              $tmp_dt_tb[]=number_format($rc['j_l'],0,',','.');
-              $arrjml['j_l']=$this->fjml_ttl($arrjml,'j_l',$rc,'j_l');
+				if(empty($idrt))
+				{
+				  $tmp_dt_tb[]=$i;
+				  $tmp_dt_tb[]=$row['no_unit_detail'];    
+				
 
-              $tmp_dt_tb[]=number_format($rc['j_p'],0,',','.');
-              $arrjml['j_p']=$this->fjml_ttl($arrjml,'j_p',$rc,'j_p');
+				  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
+				  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
+				  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
+				  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
+				
+				  $data1 = $tb->getData("$kd_wlq ($umur) and Kd_mutasi IS NULL");			
+				  $rc = $this->build_rc($data1);
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_l');
+	              $arrjml['j_l']=$this->fjml_ttl($arrjml,'j_l',$rc,'j_l');
 
-              $tmp_dt_tb[]=number_format($rc['jml'],0,',','.');
-              $arrjml['jml']=$this->fjml_ttl($arrjml,'jml',$rc,'jml');
-           
-               
-            } else{
-            	$tmp_dt_tb[]=$row['kd_indv'];
-               
-                     
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_p');
+	              $arrjml['j_p']=$this->fjml_ttl($arrjml,'j_p',$rc,'j_p');
 
-			    $tmp_dt_tb[]=$row['nama'];
-			    
-			    $data1 = $tb_gender->getData("Kd_gen=$row[kd_gen]");			
-			    $rc = $this->build_rc($data1);
+	              $tmp_dt_tb[]=$this->frupiah($rc,'jml');
+	              $arrjml['jml']=$this->fjml_ttl($arrjml,'jml',$rc,'jml');
+	           
+	               
+	            } else{
+	            	$tmp_dt_tb[]=$row['kd_indv'];
+	               
+	                     
 
-			    $tmp_dt_tb[]=$rc['Nm_gen_ind'];
+				    $tmp_dt_tb[]=$row['nama'];
+				    
+				    $data1 = $tb_gender->getData("Kd_gen=$row[kd_gen]");			
+				    $rc = $this->build_rc($data1);
 
-                $data1 = $tb_fammbrtyp->getData("Kd_fammbrtyp=$row[kd_fammbrtyp]");			
-			    $rc = $this->build_rc($data1);
+				    $tmp_dt_tb[]=$rc['Nm_gen_ind'];
 
-                $tmp_dt_tb[]=$rc['Nm_fammbrtyp_ind'];
-                
-                $t=explode("-",$row[tgl_lahir]);
-	            $tgl_lhr=$t[2]."-".$t[1]."-".$t[0]; 
-                $tmp_dt_tb[]=$tgl_lhr;
-                		   
-			     
-            }           
+	                $data1 = $tb_fammbrtyp->getData("Kd_fammbrtyp=$row[kd_fammbrtyp]");			
+				    $rc = $this->build_rc($data1);
 
-			$dt_tb[] = $tmp_dt_tb;
-			$i++;
+	                $tmp_dt_tb[]=$rc['Nm_fammbrtyp_ind'];
+	                
+	                $t=explode("-",$row[tgl_lahir]);
+		            $tgl_lhr=$t[2]."-".$t[1]."-".$t[0]; 
+	                $tmp_dt_tb[]=$tgl_lhr;
+	                		   
+				     
+	            }           
+
+				$dt_tb[] = $tmp_dt_tb;
+				$i++;
+			}	
 		}	
-		
 		
 		  $footer_tb=array();
 		if(empty($idrt)){  
@@ -1408,61 +1446,61 @@ class dt_rekapitulasi
 		$jml_pra=1;
 		$jml_ks=1;
 
-
-		foreach($data as $row)
-		{
-			$tmp_dt_tb=array();			
-
-			if(empty($idrt))
+        if(!empty($data)){
+			foreach($data as $row)
 			{
-			  $tmp_dt_tb[]=$i;
-			  $tmp_dt_tb[]=$row['no_unit_detail'];    
-			
+				$tmp_dt_tb=array();			
 
-			  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
-			  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
-			  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
-			  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
-			
-			  $data1 = $tb->getData("$kd_wlq ($umur) and ($str_krj) and Kd_mutasi IS NULL");			
-			  $rc = $this->build_rc($data1);
-            
-              $tmp_dt_tb[]=number_format($rc['j_l'],0,',','.');
-              $arrjml['j_l']=$this->fjml_ttl($arrjml,'j_l',$rc,'j_l');
+				if(empty($idrt))
+				{
+				  $tmp_dt_tb[]=$i;
+				  $tmp_dt_tb[]=$row['no_unit_detail'];    
+				
 
-              $tmp_dt_tb[]=number_format($rc['j_p'],0,',','.');
-              $arrjml['j_p']=$this->fjml_ttl($arrjml,'j_p',$rc,'j_p');
+				  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
+				  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
+				  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
+				  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
+				
+				  $data1 = $tb->getData("$kd_wlq ($umur) and ($str_krj) and Kd_mutasi IS NULL");			
+				  $rc = $this->build_rc($data1);
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_l');
+	              $arrjml['j_l']=$this->fjml_ttl($arrjml,'j_l',$rc,'j_l');
 
-              $tmp_dt_tb[]=number_format($rc['jml'],0,',','.');
-              $arrjml['jml']=$this->fjml_ttl($arrjml,'jml',$rc,'jml');
-           
-               
-            } else{
-            	$tmp_dt_tb[]=$row['kd_indv'];                    
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_p');
+	              $arrjml['j_p']=$this->fjml_ttl($arrjml,'j_p',$rc,'j_p');
 
-			    $tmp_dt_tb[]=$row['nama'];
-			    
-			    $data1 = $tb_gender->getData("Kd_gen=$row[kd_gen]");			
-			    $rc = $this->build_rc($data1);
+	              $tmp_dt_tb[]=$this->frupiah($rc,'jml');
+	              $arrjml['jml']=$this->fjml_ttl($arrjml,'jml',$rc,'jml');
+	           
+	               
+	            } else{
+	            	$tmp_dt_tb[]=$row['kd_indv'];                    
 
-			    $tmp_dt_tb[]=$rc['Nm_gen_ind'];
+				    $tmp_dt_tb[]=$row['nama'];
+				    
+				    $data1 = $tb_gender->getData("Kd_gen=$row[kd_gen]");			
+				    $rc = $this->build_rc($data1);
 
-                $data1 = $tb_fammbrtyp->getData("Kd_fammbrtyp=$row[kd_fammbrtyp]");			
-			    $rc = $this->build_rc($data1);
+				    $tmp_dt_tb[]=$rc['Nm_gen_ind'];
 
-                $tmp_dt_tb[]=$rc['Nm_fammbrtyp_ind'];
-                
-                $t=explode("-",$row[tgl_lahir]);
-	            $tgl_lhr=$t[2]."-".$t[1]."-".$t[0]; 
-                $tmp_dt_tb[]=$tgl_lhr;
-                		   
-			     
-            }           
+	                $data1 = $tb_fammbrtyp->getData("Kd_fammbrtyp=$row[kd_fammbrtyp]");			
+				    $rc = $this->build_rc($data1);
 
-			$dt_tb[] = $tmp_dt_tb;
-			$i++;
-		}	
-		
+	                $tmp_dt_tb[]=$rc['Nm_fammbrtyp_ind'];
+	                
+	                $t=explode("-",$row[tgl_lahir]);
+		            $tgl_lhr=$t[2]."-".$t[1]."-".$t[0]; 
+	                $tmp_dt_tb[]=$tgl_lhr;
+	                		   
+				     
+	            }           
+
+				$dt_tb[] = $tmp_dt_tb;
+				$i++;
+			}	
+		}
 		
 		  $footer_tb=array();
 		if(empty($idrt)){  
@@ -1530,81 +1568,81 @@ class dt_rekapitulasi
 		$jml_pra=1;
 		$jml_ks=1;
 
-
-		foreach($data as $row)
-		{
-			$tmp_dt_tb=array();			
-
-			if(empty($idrt))
+        if(!empty($data)){
+			foreach($data as $row)
 			{
-			  $tmp_dt_tb[]=$i;
-			  $tmp_dt_tb[]=$row['no_unit_detail'];    
-			
+				$tmp_dt_tb=array();			
 
-			  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
-			  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
-			  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
-			  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
-			
-			  $data1 = $tb->getData("$kd_wlq ($str_sekolah) and ($str) and Kd_mutasi IS NULL");			
-			  $rc = $this->build_rc($data1);
-            
-              $tmp_dt_tb[]=number_format($rc['j_l_712'],0,',','.');
-              $arrjml['j_l_712']=$this->fjml_ttl($arrjml,'j_l_712',$rc,'j_l_712');
+				if(empty($idrt))
+				{
+				  $tmp_dt_tb[]=$i;
+				  $tmp_dt_tb[]=$row['no_unit_detail'];    
+				
 
-              $tmp_dt_tb[]=number_format($rc['j_p_712'],0,',','.');
-              $arrjml['j_p_712']=$this->fjml_ttl($arrjml,'j_p_712',$rc,'j_p_712');
+				  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
+				  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
+				  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
+				  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
+				
+				  $data1 = $tb->getData("$kd_wlq ($str_sekolah) and ($str) and Kd_mutasi IS NULL");			
+				  $rc = $this->build_rc($data1);
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_l_712');
+	              $arrjml['j_l_712']=$this->fjml_ttl($arrjml,'j_l_712',$rc,'j_l_712');
 
-              $tmp_dt_tb[]=number_format($rc['jml_712'],0,',','.');
-              $arrjml['jml_712']=$this->fjml_ttl($arrjml,'jml_712',$rc,'jml_712');
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_p_712');
+	              $arrjml['j_p_712']=$this->fjml_ttl($arrjml,'j_p_712',$rc,'j_p_712');
 
-              $tmp_dt_tb[]=number_format($rc['j_l_1315'],0,',','.');
-              $arrjml['j_l_1315']=$this->fjml_ttl($arrjml,'j_l_1315',$rc,'j_l_1315');
+	              $tmp_dt_tb[]=$this->frupiah($rc,'jml_712');
+	              $arrjml['jml_712']=$this->fjml_ttl($arrjml,'jml_712',$rc,'jml_712');
 
-              $tmp_dt_tb[]=number_format($rc['j_p_1315'],0,',','.');
-              $arrjml['j_p_1315']=$this->fjml_ttl($arrjml,'j_p_1315',$rc,'j_p_1315');
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_l_1315');
+	              $arrjml['j_l_1315']=$this->fjml_ttl($arrjml,'j_l_1315',$rc,'j_l_1315');
 
-              $tmp_dt_tb[]=number_format($rc['jml_1315'],0,',','.');
-              $arrjml['jml_1315']=$this->fjml_ttl($arrjml,'jml_1315',$rc,'jml_1315');
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_p_1315');
+	              $arrjml['j_p_1315']=$this->fjml_ttl($arrjml,'j_p_1315',$rc,'j_p_1315');
 
-              $tmp_dt_tb[]=number_format($rc['j_l_1618'],0,',','.');
-              $arrjml['j_l_1618']=$this->fjml_ttl($arrjml,'j_l_1618',$rc,'j_l_1618');
+	              $tmp_dt_tb[]=$this->frupiah($rc,'jml_1315');
+	              $arrjml['jml_1315']=$this->fjml_ttl($arrjml,'jml_1315',$rc,'jml_1315');
 
-              $tmp_dt_tb[]=number_format($rc['j_p_1618'],0,',','.');
-              $arrjml['j_p_1618']=$this->fjml_ttl($arrjml,'j_p_1618',$rc,'j_p_1618');
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_l_1618');
+	              $arrjml['j_l_1618']=$this->fjml_ttl($arrjml,'j_l_1618',$rc,'j_l_1618');
 
-              $tmp_dt_tb[]=number_format($rc['jml_1618'],0,',','.');
-              $arrjml['jml_1618']=$this->fjml_ttl($arrjml,'jml_1618',$rc,'jml_1618');
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_p_1618');
+	              $arrjml['j_p_1618']=$this->fjml_ttl($arrjml,'j_p_1618',$rc,'j_p_1618');
 
-              $tmp_dt_tb[]=number_format($rc['jml'],0,',','.');
-              $arrjml['jml']=$this->fjml_ttl($arrjml,'jml',$rc,'jml');
-           
-               
-            } else{
-            	$tmp_dt_tb[]=$row['kd_indv'];           
+	              $tmp_dt_tb[]=$this->frupiah($rc,'jml_1618');
+	              $arrjml['jml_1618']=$this->fjml_ttl($arrjml,'jml_1618',$rc,'jml_1618');
 
-			    $tmp_dt_tb[]=$row['nama'];
-			    
-			    $data1 = $tb_gender->getData("Kd_gen=$row[kd_gen]");			
-			    $rc = $this->build_rc($data1);
+	              $tmp_dt_tb[]=$this->frupiah($rc,'jml');
+	              $arrjml['jml']=$this->fjml_ttl($arrjml,'jml',$rc,'jml');
+	           
+	               
+	            } else{
+	            	$tmp_dt_tb[]=$row['kd_indv'];           
 
-			    $tmp_dt_tb[]=$rc['Nm_gen_ind'];
-               
-                $t=explode("-",$row[tgl_lahir]);
-	            $tgl_lhr=$t[2]."-".$t[1]."-".$t[0]; 
-                $tmp_dt_tb[]=$tgl_lhr;
-                		   
-			    $tmp_dt_tb[]=$row['u712']==1 ? 'V':'';
-			    $tmp_dt_tb[]=$row['u1315']==1 ? 'V':'';
-			    $tmp_dt_tb[]=$row['u1618']==1 ? 'V':'';
+				    $tmp_dt_tb[]=$row['nama'];
+				    
+				    $data1 = $tb_gender->getData("Kd_gen=$row[kd_gen]");			
+				    $rc = $this->build_rc($data1);
+
+				    $tmp_dt_tb[]=$rc['Nm_gen_ind'];
+	               
+	                $t=explode("-",$row['tgl_lahir']);
+		            $tgl_lhr=$t[2]."-".$t[1]."-".$t[0]; 
+	                $tmp_dt_tb[]=$tgl_lhr;
+	                		   
+				    $tmp_dt_tb[]=$row['u712']==1 ? 'V':'';
+				    $tmp_dt_tb[]=$row['u1315']==1 ? 'V':'';
+				    $tmp_dt_tb[]=$row['u1618']==1 ? 'V':'';
 
 
-            }           
+	            }           
 
-			$dt_tb[] = $tmp_dt_tb;
-			$i++;
-		}	
-		
+				$dt_tb[] = $tmp_dt_tb;
+				$i++;
+			}	
+		}
 		
 		  $footer_tb=array();
 		if(empty($idrt)){  
@@ -1672,73 +1710,73 @@ class dt_rekapitulasi
 		$jml_pra=1;
 		$jml_ks=1;
 
-
-		foreach($data as $row)
-		{
-			$tmp_dt_tb=array();			
-
-			if(empty($idrt))
+        if(!empty($data)){
+			foreach($data as $row)
 			{
-			  $tmp_dt_tb[]=$i;
-			  $tmp_dt_tb[]=$row['no_unit_detail'];    
-			
+				$tmp_dt_tb=array();			
 
-			  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
-			  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
-			  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
-			  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
-			
-			  $data1 = $tb->getData("$kd_wlq pus='1' AND Kd_nonacptr!=0 AND Kd_mutasi IS NULL");			
-			  $rc = $this->build_rc($data1);
-            
-              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
+				if(empty($idrt))
+				{
+				  $tmp_dt_tb[]=$i;
+				  $tmp_dt_tb[]=$row['no_unit_detail'];    
+				
 
-              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
-              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
-              
-              if(!empty($dt_contr)){
-                 			     
-			     foreach ($dt_contr as $row) {
-				   $str="j_$row[Kd_nonacptr]";
-			       $tmp_dt_tb[]=number_format($rc[$str],0,',','.');
-                   $arrjml[$str]=$this->fjml_ttl($arrjml,$str,$rc,$str);
-                   	   
-			     }
-                   
-                   
-		      }
-            
-               
-            } else{
-            	$tmp_dt_tb[]=$row['Kd_fam'];
-               
-                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
-			    $rc = $this->build_rc($data1);     
+				  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
+				  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
+				  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
+				  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
+				
+				  $data1 = $tb->getData("$kd_wlq pus='1' AND Kd_nonacptr!=0 AND Kd_mutasi IS NULL");			
+				  $rc = $this->build_rc($data1);
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+	              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
 
-			    $tmp_dt_tb[]=$rc['Nama'];
-			    $tmp_dt_tb[]=$row['jml_jiwa'];
-			    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
-			    
-			    if(!empty($dt_contr)){                 			     
-			     foreach ($dt_contr as $row1) {
-				    if($row['Kd_nonacptr']==$row1['Kd_nonacptr'])
-				    {
-                      $tmp_dt_tb[]='V';
-                      $str="j_$row1[Kd_nonacptr]";
-			          $arrjml[$str]=$this->fjml_ttl($arrjml[$str],'',1,'');
-				    } else{
-				    	$tmp_dt_tb[]='';
-				    }                	   
-			     }
-		      }
-			     
-            }           
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_jiwa');
+	              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
+	              
+	              if(!empty($dt_contr)){
+	                 			     
+				     foreach ($dt_contr as $row) {
+					   $str="j_$row[Kd_nonacptr]";
+				       $tmp_dt_tb[]=$this->frupiah($rc,$str);
+	                   $arrjml[$str]=$this->fjml_ttl($arrjml,$str,$rc,$str);
+	                   	   
+				     }
+	                   
+	                   
+			      }
+	            
+	               
+	            } else{
+	            	$tmp_dt_tb[]=$row['Kd_fam'];
+	               
+	                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
+				    $rc = $this->build_rc($data1);     
 
-			$dt_tb[] = $tmp_dt_tb;
-			$i++;
-		}	
-		
+				    $tmp_dt_tb[]=$rc['Nama'];
+				    $tmp_dt_tb[]=$row['jml_jiwa'];
+				    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
+				    
+				    if(!empty($dt_contr)){                 			     
+				     foreach ($dt_contr as $row1) {
+					    if($row['Kd_nonacptr']==$row1['Kd_nonacptr'])
+					    {
+	                      $tmp_dt_tb[]='V';
+	                      $str="j_$row1[Kd_nonacptr]";
+				          $arrjml[$str]=$this->fjml_ttl($arrjml[$str],'',1,'');
+					    } else{
+					    	$tmp_dt_tb[]='';
+					    }                	   
+				     }
+			      }
+				     
+	            }           
+
+				$dt_tb[] = $tmp_dt_tb;
+				$i++;
+			}	
+		}
 		
 		$footer_tb=array();
 		$tmp_footer=array();
@@ -1808,104 +1846,104 @@ class dt_rekapitulasi
 		$jml_pra=1;
 		$jml_ks=1;
 
-
-		foreach($data as $row)
-		{
-			$tmp_dt_tb=array();			
-
-			if(empty($idrt))
+        if(!empty($data)){
+			foreach($data as $row)
 			{
-			  $tmp_dt_tb[]=$i;
-			  $tmp_dt_tb[]=$row['no_unit_detail'];    
-			
+				$tmp_dt_tb=array();			
 
-			  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
-			  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
-			  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
-			  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
-			
-			  $data1 = $tb->getData("$kd_wlq Kd_mutasi IS NULL");			
-			  $rc = $this->build_rc($data1);
-            
-              $tmp_dt_tb[]=number_format($rc['j_kk'],0,',','.');
-              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
+				if(empty($idrt))
+				{
+				  $tmp_dt_tb[]=$i;
+				  $tmp_dt_tb[]=$row['no_unit_detail'];    
+				
 
-              $tmp_dt_tb[]=number_format($rc['j_jiwa'],0,',','.');
-              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
-              
-              $tmp_dt_tb[]=number_format($rc['j_pra_s'],0,',','.');
-              $arrjml['j_pra_s']=$this->fjml_ttl($arrjml,'j_pra_s',$rc,'j_pra_s');
-                       	   
-			  $tmp_dt_tb[]=number_format($rc['j_ks_1'],0,',','.');
-              $arrjml['j_ks_1']=$this->fjml_ttl($arrjml,'j_ks_1',$rc,'j_ks_1');
-              
-              $tmp_dt_tb[]=number_format($rc['j_ks_2'],0,',','.');
-              $arrjml['j_ks_2']=$this->fjml_ttl($arrjml,'j_ks_2',$rc,'j_ks_2');
-              
-              $tmp_dt_tb[]=number_format($rc['j_ks_3'],0,',','.');
-              $arrjml['j_ks_3']=$this->fjml_ttl($arrjml,'j_ks_3',$rc,'j_ks_3');
-              
-              $tmp_dt_tb[]=number_format($rc['j_ks_3_p'],0,',','.');
-              $arrjml['j_ks_3_p']=$this->fjml_ttl($arrjml,'j_ks_3_p',$rc,'j_ks_3_p');
-              
-               
-            } else{
-            	$tmp_dt_tb[]=$row['Kd_fam'];
-               
-                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
-			    $rc = $this->build_rc($data1);     
+				  $kd_wlq=$this->getkdwl(($idkec==0 ? $row['id_unit_detail'] : $idkec ),
+				  ( (($idkec!=0) and ($iddesa == 0)) ? $row['id_unit_detail'] : $iddesa),
+				  ( (($idkec!=0) and ($iddesa != 0) and ($iddusun==0)) ? $row['id_unit_detail']  : $iddusun),
+				  ((($idkec!=0) and ($iddesa != 0) and ($iddusun!=0) and ($idrt==0)) ? $row['id_unit_detail']  : $idrt));          
+				
+				  $data1 = $tb->getData("$kd_wlq Kd_mutasi IS NULL");			
+				  $rc = $this->build_rc($data1);
+	            
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_kk');
+	              $arrjml['j_kk']=$this->fjml_ttl($arrjml,'j_kk',$rc,'j_kk');
 
-			    $tmp_dt_tb[]=$rc['Nama'];
-			    $tmp_dt_tb[]=$row['jml_jiwa'];
-			    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
-			 		    
-				    if($row['pra_s']==1)
-				    {
-                      $tmp_dt_tb[]='V';
-                      $arrjml['pra_s']=$this->fjml_ttl($arrjml['pra_s'],'',1,'');
-				    } else{
-				    	$tmp_dt_tb[]='';
-				    }
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_jiwa');
+	              $arrjml['j_jiwa']=$this->fjml_ttl($arrjml,'j_jiwa',$rc,'j_jiwa');
+	              
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_pra_s');
+	              $arrjml['j_pra_s']=$this->fjml_ttl($arrjml,'j_pra_s',$rc,'j_pra_s');
+	                       	   
+				  $tmp_dt_tb[]=$this->frupiah($rc,'j_ks_1');
+	              $arrjml['j_ks_1']=$this->fjml_ttl($arrjml,'j_ks_1',$rc,'j_ks_1');
+	              
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_ks_2');
+	              $arrjml['j_ks_2']=$this->fjml_ttl($arrjml,'j_ks_2',$rc,'j_ks_2');
+	              
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_ks_3');
+	              $arrjml['j_ks_3']=$this->fjml_ttl($arrjml,'j_ks_3',$rc,'j_ks_3');
+	              
+	              $tmp_dt_tb[]=$this->frupiah($rc,'j_ks_3_p');
+	              $arrjml['j_ks_3_p']=$this->fjml_ttl($arrjml,'j_ks_3_p',$rc,'j_ks_3_p');
+	              
+	               
+	            } else{
+	            	$tmp_dt_tb[]=$row['Kd_fam'];
+	               
+	                $data1 = $tb_indv->getData("Kd_fam='$row[Kd_fam]' and Kd_fammbrtyp=1");			
+				    $rc = $this->build_rc($data1);     
 
-				    if($row['ks_1']==1)
-				    {
-                      $tmp_dt_tb[]='V';
-                      $arrjml['ks_1']=$this->fjml_ttl($arrjml['ks_1'],'',1,'');
-				    } else{
-				    	$tmp_dt_tb[]='';
-				    }
+				    $tmp_dt_tb[]=$rc['Nama'];
+				    $tmp_dt_tb[]=$row['jml_jiwa'];
+				    $arrjml['jml_jiwa']=$this->fjml_ttl($arrjml,'jml_jiwa',$row,'jml_jiwa');
+				 		    
+					    if($row['pra_s']==1)
+					    {
+	                      $tmp_dt_tb[]='V';
+	                      $arrjml['pra_s']=$this->fjml_ttl($arrjml['pra_s'],'',1,'');
+					    } else{
+					    	$tmp_dt_tb[]='';
+					    }
 
-				    if($row['ks_2']==1)
-				    {
-                      $tmp_dt_tb[]='V';
-                      $arrjml['ks_2']=$this->fjml_ttl($arrjml['ks_2'],'',1,'');
-				    } else{
-				    	$tmp_dt_tb[]='';
-				    }
+					    if($row['ks_1']==1)
+					    {
+	                      $tmp_dt_tb[]='V';
+	                      $arrjml['ks_1']=$this->fjml_ttl($arrjml['ks_1'],'',1,'');
+					    } else{
+					    	$tmp_dt_tb[]='';
+					    }
 
-				    if($row['ks_3']==1)
-				    {
-                      $tmp_dt_tb[]='V';
-                      $arrjml['ks_3']=$this->fjml_ttl($arrjml['ks_3'],'',1,'');
-				    } else{
-				    	$tmp_dt_tb[]='';
-				    }
+					    if($row['ks_2']==1)
+					    {
+	                      $tmp_dt_tb[]='V';
+	                      $arrjml['ks_2']=$this->fjml_ttl($arrjml['ks_2'],'',1,'');
+					    } else{
+					    	$tmp_dt_tb[]='';
+					    }
 
-				    if($row['ks_3_p']==1)
-				    {
-                      $tmp_dt_tb[]='V';
-                      $arrjml['ks_3_p']=$this->fjml_ttl($arrjml['ks_3_p'],'',1,'');
-				    } else{
-				    	$tmp_dt_tb[]='';
-				    }                	   
-			    
-			     
-            }           
+					    if($row['ks_3']==1)
+					    {
+	                      $tmp_dt_tb[]='V';
+	                      $arrjml['ks_3']=$this->fjml_ttl($arrjml['ks_3'],'',1,'');
+					    } else{
+					    	$tmp_dt_tb[]='';
+					    }
 
-			$dt_tb[] = $tmp_dt_tb;
-			$i++;
-		}	
-		
+					    if($row['ks_3_p']==1)
+					    {
+	                      $tmp_dt_tb[]='V';
+	                      $arrjml['ks_3_p']=$this->fjml_ttl($arrjml['ks_3_p'],'',1,'');
+					    } else{
+					    	$tmp_dt_tb[]='';
+					    }                	   
+				    
+				     
+	            }           
+
+				$dt_tb[] = $tmp_dt_tb;
+				$i++;
+			}	
+		}
 		
 		$footer_tb=array();
 		$tmp_footer=array();

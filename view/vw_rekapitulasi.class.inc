@@ -59,11 +59,15 @@ class vw_rekapitulasi
                 $txt = $txt."<th colspan='2'>$row</th>";                      
                 $jml1 = count($tmp_dt_tb['footer_tb']);
                 $jml2 = count($tmp_dt_tb['footer_tb'],1);
-                if($jml1==$jml2){
-                   foreach($tmp_dt_tb['footer_tb'] as $row)
-                   {
-                     $txt = $txt."<th align='right'>".$row."</th>";
-                   }
+                if($jml1==$jml2){                   
+                     foreach($tmp_dt_tb['footer_tb'] as $row)
+                     {
+                        if(!is_array($row)){
+                         $txt = $txt."<th align='right'>".$row."</th>";
+                        }
+
+                     }
+                   
                 }else{
                     foreach($tmp_dt_tb['footer_tb'][$i] as $row)
                     {
